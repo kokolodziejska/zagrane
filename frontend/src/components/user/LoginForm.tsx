@@ -16,15 +16,16 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
   const [loginError, setLoginError] = useState('');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
   const validationSchema = yup.object({
-    email: yup.string().trim().required('Podaj swój e-mail').email('Nieprawidłowy adres e-mail'),
+    username: yup.string().trim().required('Podaj swoją nazwę użytkownika'),
     password: yup.string().required('Podaj hasło'),
   });
 
   return (
     <>
       <Formik
-        initialValues={{ email: '', password: '' }}
+        initialValues={{ username: '', password: '' }}
         validationSchema={validationSchema}
         validateOnBlur
         validateOnChange={false}
@@ -47,7 +48,6 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
               dispatch(
                 setUserProfile({
                   userId: data.clientId,
-                  userEmail: data.email,
                   userName: data.name,
                   userSurname: data.surname,
                   departmentId: data.departmentId,
@@ -56,7 +56,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
                 })
               );
             }
-            
+
             setLoginError('');
             if (data.role === 'admin') {
               navigate('/admin');
@@ -78,14 +78,14 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
             </div>
             <div className="grid gap-1">
               <div className="grid gap-3">
-                <Field name="email">
+                <Field name="username">
                   {({ field, meta }: any) => (
                     <div className="grid gap-2">
-                      <Label htmlFor="email">Nazwa użytkonika</Label>
+                      <Label htmlFor="username">Nazwa użytkownika</Label>
                       <Input
-                        id="text"
+                        id="username"
                         type="text"
-                        placeholder="jan.kowalski"
+                        placeholder="jan.kowalski" 
                         {...field}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -94,7 +94,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
                       <p
                         className={`text-xs text-center ${meta.touched && meta.error ? 'text-red-500' : 'invisible'}`}
                         aria-live="polite"
-                        id="email-error"
+                        id="username-error"
                       >
                         {meta.error || 'placeholder'}
                       </p>
@@ -119,7 +119,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
                       <p
                         className={`text-xs text-center ${meta.touched && meta.error ? 'text-red-500' : 'invisible'}`}
                         aria-live="polite"
-                        id="email-error"
+                        id="password-error" 
                       >
                         {meta.error || 'placeholder'}
                       </p>
@@ -134,7 +134,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
                 <p
                   className={`text-xs text-center pt-2 ${loginError ? 'text-red-500' : 'invisible'}`}
                   aria-live="polite"
-                  id="email-error"
+                  id="login-error-message" 
                 >
                   {loginError || 'placeholder'}
                 </p>

@@ -6,7 +6,6 @@ const today = new Date().toISOString().slice(0, 10);
 export interface UserState {
   isLogin: boolean;
   userId: number;
-  userEmail: string;
   userName: string;
   userSurname: string; 
   departmentId: number;
@@ -22,7 +21,6 @@ export interface UserState {
 const initialState: UserState = {
   userId: 0,
   isLogin: false,
-  userEmail: '',
   userName: '',
   userSurname: '',
   departmentId: 0,
@@ -47,7 +45,6 @@ const userSlice = createSlice({
     ) => {
       state.isLogin = true;
       state.userId = action.payload.userId;
-      state.userEmail = action.payload.userEmail;
       state.userName = action.payload.userName;
       state.userSurname = action.payload.userSurname;
       state.departmentId = action.payload.departmentId;
