@@ -28,5 +28,10 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "src/components/admin/.tsx", "src/components/admin/pricesettings/.tsx"]
+  "include": [
+    "src",
+    "src/components/admin/.tsx",
+    "src/components/admin/pricesettings/.tsx",
+    "src/pages/admin/MangeUserPage.tsx"
+  ]
 }
