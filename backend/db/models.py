@@ -88,7 +88,6 @@ class Chapters(Base):
 
     division: Mapped["Divisions"] = relationship("Divisions", backref="chapters")
 
-<<<<<<< HEAD
 # class Task(Base):
 #     __tablename__ = "tasks"
 #     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -96,8 +95,6 @@ class Chapters(Base):
 #     type: Mapped[str] = mapped_column(String, nullable=False) 
 #     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-=======
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
 class Paragraphs(Base):
     __tablename__ = "paragraphs"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

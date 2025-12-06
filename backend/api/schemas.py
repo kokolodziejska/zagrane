@@ -78,49 +78,31 @@ class RowDataDTO(BaseModel):
     expenditure_limit_1: Decimal
     unallocated_task_funds_1: Decimal
     contract_amount_1: Decimal
-<<<<<<< HEAD
     contract_number_1: str
 
-=======
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
 
     financial_needs_2: Decimal
     expenditure_limit_2: Decimal
     unallocated_task_funds_2: Decimal
     contract_amount_2: Decimal
-<<<<<<< HEAD
     contract_number_2: str
 
-=======
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
 
     financial_needs_3: Decimal
     expenditure_limit_3: Decimal
     unallocated_task_funds_3: Decimal
     contract_amount_3: Decimal
-<<<<<<< HEAD
     contract_number_3: str
     
 
 
-=======
-
-    contract_number: Optional[str] = None
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
     subsidy_agreement_party: Optional[str] = None
     legal_basis_for_subsidy: Optional[str] = None
     notes: Optional[str] = None
     
     additionals: Optional[Dict[str, Any]] = None
 
-<<<<<<< HEAD
     
-=======
-    division: DivisionRead = None
-    chapter: ChapterRead = None
-    paragraph: ParagraphRead = None
-    expense_group: ExpenseGroupRead = None
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -135,13 +117,8 @@ class DepartmentTableDTO(BaseModel):
     id: int
     start: time
     end: time
-<<<<<<< HEAD
     status: StatusRead
     department: DepartmentRead
-=======
-    department: DepartmentRead
-    status: StatusRead
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
     rows: List[RowDTO] = []
     model_config = ConfigDict(from_attributes=True)
 
@@ -152,7 +129,6 @@ class TableFullDTO(BaseModel):
     isOpen: bool
     budget: float
     department_tables: List[DepartmentTableDTO] = []
-<<<<<<< HEAD
     model_config = ConfigDict(from_attributes=True)
 
 HEADERS = [
@@ -198,6 +174,3 @@ HEADERS = [
     "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
     "Nr umowy/nr wniosku o udzielenie zamówienia publicznego"
 ]
-=======
-    model_config = ConfigDict(from_attributes=True)
->>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
