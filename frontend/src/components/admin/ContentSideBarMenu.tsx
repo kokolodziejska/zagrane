@@ -32,7 +32,7 @@ function ContentSideBarMenu() {
             to="/admin/zarzadzajRezerwacjami"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            Zarządzaj rezerwacjami
+            Nanieś limity
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -40,10 +40,32 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/statystyki"
+            to="/admin/zarzadzajRezerwacjami"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            Statystyki
+            Zarządzaj budżetem
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <NavLink
+            to="/admin/zarzadzajRezerwacjami"
+            className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
+          >
+            WIadomości
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <NavLink
+            to="/admin/zarzadzaj-urzytkonikami"
+            className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
+          >
+            Zarządzaj użytkonikami
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -53,7 +75,7 @@ function ContentSideBarMenu() {
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton>
-              <span>Dane firmy</span>
+              <span>Zobacz budżet</span>
               <ChevronDown className="ml-auto" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
@@ -66,7 +88,7 @@ function ContentSideBarMenu() {
                     to="/admin/UstawieniaGlobalne"
                     className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
                   >
-                    Globalne
+                    2025
                   </NavLink>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
@@ -74,10 +96,10 @@ function ContentSideBarMenu() {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton asChild>
                   <NavLink
-                    to="/admin/UstawieniaObiektow"
+                    to="/admin/UstawieniaGlobalne"
                     className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
                   >
-                    Obiekty
+                    2026
                   </NavLink>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
@@ -85,42 +107,22 @@ function ContentSideBarMenu() {
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton asChild>
                   <NavLink
-                    to="/admin/UstawieniaCennika"
+                    to="/admin/UstawieniaGlobalne"
                     className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
                   >
-                    Cennik
+                    2027
                   </NavLink>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
-            </SidebarMenuSub>
-          </CollapsibleContent>
-        </SidebarMenuItem>
-      </Collapsible>
 
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarMenuItem>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton>
-              <span>Strona</span>
-              <ChevronDown className="ml-auto" />
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <SidebarMenuSub>
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton asChild>
-                  <NavLink to="/projekty/1">Strona główna</NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/projekty/2">O nas</NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild>
-                  <NavLink to="/projekty/3">Kontakt</NavLink>
+                  <NavLink
+                    to="/admin/UstawieniaGlobalne"
+                    className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
+                  >
+                    2028
+                  </NavLink>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             </SidebarMenuSub>

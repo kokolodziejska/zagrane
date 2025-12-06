@@ -20,6 +20,9 @@ function HeaderAdmin() {
             alt="Image"
             className="absolute top-[1vh] left-[2vh] h-[7vh] w-auto dark:brightness-[0.2] dark:grayscale"
           />
+          <h1 className="absolute text-white left-[11vw] top-[2vh] text-[3vh] flex items-center gap-x-6">
+            Zgrane
+          </h1>
         </div>
       </div>
       <div
