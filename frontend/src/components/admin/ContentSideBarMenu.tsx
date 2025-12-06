@@ -29,7 +29,7 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/zarzadzajRezerwacjami"
+            to="/admin/zarzadzaj-budrzetem"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
             Zarządzaj budżetem
@@ -40,10 +40,10 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/limity-budrzetu"
+            to="/admin/uwagi-do-budżetu"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            Limity budrzetu
+            Uwagi do budżetu
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -51,10 +51,10 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/zarzadzajRezerwacjami"
+            to="/admin/limity-budzetu"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            WIadomości
+            Limity budżetu
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -7,6 +7,7 @@ import DashBoard from './pages/admin/DashBoard';
 import MangeUserPage from './pages/admin/dashboard/MangeUserPage';
 import LimitBudgetPage from './pages/admin/dashboard/LimitBudgetPage';
 import MangeBudgetPage from './pages/admin/dashboard/MangeBudgetPage';
+import AddComentsPage from './pages/admin/dashboard/AddComentsPage';
 
 function App() {
   return (
@@ -18,8 +19,9 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<DashBoard />} />
             <Route path="zarzadzaj-urzytkonikami" element={<MangeUserPage />} />
-            <Route path="limity-budrzetu" element={<LimitBudgetPage />} />
-            <Route path="limity-budrzetu" element={<MangeBudgetPage />} />
+            <Route path="limity-budzetu" element={<LimitBudgetPage />} />
+            <Route path="zarzadzaj-budrzetem" element={<MangeBudgetPage />} />
+            <Route path="uwagi-do-budżetu" element={<AddComentsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
