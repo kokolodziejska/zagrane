@@ -1,0 +1,14 @@
+{
+  "openingHour": "07:00",
+  "closingHour": "23:00",
+  "timeBlock": 0.5,
+  "minimalTimeBlock": 1,
+  "maximalTimeBlock": 3,
+  "minBookingAdvanceTime": 2,
+  "mincancelReservationTime": 24,
+  "currency": "PLN",
+
+  "defaultPlayers": 1,
+  "defaultDiscipline": "Tenis",
+  "availableDisciplines": ["Tenis", "Piłka nożna", "All"]
+}

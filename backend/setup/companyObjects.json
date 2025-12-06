@@ -1,0 +1,92 @@
+{
+  "objects": [
+    {
+      "id": 1,
+      "name": "Kort 1",
+      "discipline": "Tenis", 
+      "description": "Hala ziemny",
+      "openingHour": "07:00",
+      "closingHour": "23:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 2,
+      "name": "Kort 2",
+      "discipline": "Tenis", 
+      "description": "Hala ziemny",
+      "openingHour": "07:00",
+      "closingHour": "23:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 3,
+      "name": "Kort 3",
+      "discipline": "Tenis", 
+      "description": "Hala twarda",
+      "openingHour": "07:00",
+      "closingHour": "22:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 4,
+      "name": "Kort 4",
+      "discipline": "Tenis", 
+      "description": "Hala twarda",
+      "openingHour": "07:00",
+      "closingHour": "22:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 5,
+      "name": "Kort 5",
+      "discipline": "Tenis", 
+      "description": "Odkryty ziemny",
+      "openingHour": "09:00",
+      "closingHour": "20:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 6,
+      "name": "Kort 6",
+      "discipline": "Tenis", 
+      "description": "Odkryty ziemny",
+      "openingHour": "09:00",
+      "closingHour": "20:00",
+      "timeBlock": 0.5,
+      "minimalTimeBlock": 1.0,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 7,
+      "name": "Boisko 1",
+      "discipline": "Piłka nożna", 
+      "description": "Odkryte piłkarskie",
+      "openingHour": "07:00",
+      "closingHour": "23:00",
+      "timeBlock": 1,
+      "minimalTimeBlock": 1,
+      "maximalTimeBlock": 3.0
+    },
+    {
+      "id": 8,
+      "name": "Boisko 2",
+      "discipline": "Piłka nożna",
+      "description": "Odkryte piłkarskie",
+      "openingHour": "07:00",
+      "closingHour": "23:00",
+      "timeBlock": 1,
+      "minimalTimeBlock": 1,
+      "maximalTimeBlock": 3.0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": 1,
+  "title": "Sezon Zimowy (01.10-30.04) ",
+  "meta": {
+    "validFrom": "2025-10-01",
+    "validTo": "2026-04-30",
+    "currency": "PLN",
+    "unit": 1
+  },
+
+  "tables": [
+    {
+      "id": 1,
+      "title": "Korty 1-4",
+      "subtitle": "Hala twarda/mączka korty [1-4]",
+      "headers": ["Dzień", "Godzina", "Cena jednorazowa", "Karnet"],
+      "descriptions": ["Opłata za światło wynosi dodatkowe 10zł."]
+    },
+    {
+      "id": 2,
+      "title": "Korty 5-6",
+      "subtitle": "Odkryty mączka",
+      "headers": ["Dzień", "Godzina", "Cena jednorazowa", "Karnet"],
+      "descriptions": [
+        "Opłata za światło wynosi dodatkowe 10zł.",
+        "W przypadku złych warunków pogodowych obowiązuje zwrot 50% opłaty. (Szczegóły w regulaminie)"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Boiska 1-2",
+      "subtitle": "Odkryte piłkarskie",
+      "headers": ["Dzień", "Godzina", "Cena jednorazowa"],
+      "descriptions": [
+        "Opłata za światło wynosi dodatkowe 20zł.",
+        "W przypadku złych warunków pogodowych obowiązuje zwrot 50% opłaty. (Szczegóły w regulaminie)"
+      ]
+    }
+  ],
+  "descriptions": [
+    {
+      "header": "Dostępne karnety Tenisowe",
+      "text": [
+        "Bez stałej rezerwacji kortu minimalna wpłata 1000zł; ważny od momentu nabycia do końca roku kalendarzowego, w którym został zakupiony",
+        "Ze stałą rezerwacją kortu, obowiązują warunki umowy (Szczegóły w umowie zakupu karnetu)"
+      ]
+    },
+    {
+      "header": "Honorowane zniżki",
+      "text": [
+        "Honorujemy karty MultiSport, MedicoverSport – 15 zł zniżki jedna karta 1h (maks. dwie karty na godzinę)",
+        "Przypominamy o okazaniu karty MultiSport, MedicoverSport przed rozpoczęciem gry"
+      ]
+    }
+  ]
+}
