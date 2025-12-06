@@ -88,6 +88,13 @@ class Chapters(Base):
 
     division: Mapped["Divisions"] = relationship("Divisions", backref="chapters")
 
+# class Task(Base):
+#     __tablename__ = "tasks"
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+#     value: Mapped[str] = mapped_column(String, nullable=False)
+#     type: Mapped[str] = mapped_column(String, nullable=False) 
+#     description: Mapped[str] = mapped_column(Text, nullable=True)
+
 class Paragraphs(Base):
     __tablename__ = "paragraphs"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -116,8 +123,12 @@ class RowDatas(Base):
     paragraph_id: Mapped[int] = mapped_column(ForeignKey("paragraphs.id"), nullable=False)
     funding_source: Mapped[str] = mapped_column(String(1), nullable=True)
     expense_group_id: Mapped[int] = mapped_column(ForeignKey("expense_groups.id"), nullable=False)
-    task_budget_full: Mapped[str] = mapped_column(String(8), nullable=False)
-    task_budget_function_task: Mapped[str] = mapped_column(String(5), nullable=False)
+    # task_budget_full_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False)
+    # task_budget_function_task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False)
+    task_budget_full: Mapped[int] = mapped_column(String(10), nullable=False)
+    task_budget_function_task: Mapped[int] = mapped_column(String(10), nullable=False)
+    
+
     program_project_name: Mapped[str] = mapped_column(String, nullable=True)
     organizational_unit_name: Mapped[str] = mapped_column(String, nullable=True)
     plan_wi: Mapped[str] = mapped_column(String, nullable=True)
@@ -130,19 +141,22 @@ class RowDatas(Base):
     expenditure_limit_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     unallocated_task_funds_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     contract_amount_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_number_0: Mapped[str] = mapped_column(String, nullable=False)
     financial_needs_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     expenditure_limit_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     unallocated_task_funds_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     contract_amount_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_number_1: Mapped[str] = mapped_column(String, nullable=False)
     financial_needs_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     expenditure_limit_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     unallocated_task_funds_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     contract_amount_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_number_2: Mapped[str] = mapped_column(String, nullable=False)
     financial_needs_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     expenditure_limit_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     unallocated_task_funds_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     contract_amount_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
-    contract_number: Mapped[str] = mapped_column(String, nullable=True)
+    contract_number_3: Mapped[str] = mapped_column(String, nullable=False)
     subsidy_agreement_party: Mapped[str] = mapped_column(String, nullable=True)
     legal_basis_for_subsidy: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[str] = mapped_column(String, nullable=True)
@@ -153,3 +167,5 @@ class RowDatas(Base):
     chapter: Mapped["Chapters"] = relationship("Chapters", backref="row_datas")
     paragraph: Mapped["Paragraphs"] = relationship("Paragraphs", backref="row_datas")
     expense_group: Mapped["ExpenseGroups"] = relationship("ExpenseGroups", backref="row_datas")
+    # task_budget_full: Mapped["Task"] = relationship("Task", backref="row_datas")
+    # task_budget_function_task: Mapped["Task"] = relationship("Task", backref="row_datas")

@@ -23,6 +23,13 @@ class ExpenseGroupRead(BaseModel):
     definition: str
     model_config = ConfigDict(from_attributes=True)
 
+# class TaskRead(BaseModel):
+#     id: int
+#     value: str
+#     type: str
+#     description: str
+#     model_config = ConfigDict(from_attributes=True)
+
 class DepartmentRead(BaseModel):
     id: int
     type: str
@@ -40,8 +47,12 @@ class RowDataDTO(BaseModel):
     last_update: time
 
     budget_part: str
-    division_id: int
+    division: DivisionRead = None
+    chapter: ChapterRead = None
+    paragraph: ParagraphRead = None
     funding_source: Optional[str] = None
+    expense_group_id: int
+    expense_group: ExpenseGroupRead = None
 
     task_budget_full: str
     task_budget_function_task: str
@@ -60,33 +71,38 @@ class RowDataDTO(BaseModel):
     expenditure_limit_0: Decimal
     unallocated_task_funds_0: Decimal
     contract_amount_0: Decimal
+    contract_number_0: str
+
 
     financial_needs_1: Decimal
     expenditure_limit_1: Decimal
     unallocated_task_funds_1: Decimal
     contract_amount_1: Decimal
+    contract_number_1: str
+
 
     financial_needs_2: Decimal
     expenditure_limit_2: Decimal
     unallocated_task_funds_2: Decimal
     contract_amount_2: Decimal
+    contract_number_2: str
+
 
     financial_needs_3: Decimal
     expenditure_limit_3: Decimal
     unallocated_task_funds_3: Decimal
     contract_amount_3: Decimal
+    contract_number_3: str
+    
 
-    contract_number: Optional[str] = None
+
     subsidy_agreement_party: Optional[str] = None
     legal_basis_for_subsidy: Optional[str] = None
     notes: Optional[str] = None
     
     additionals: Optional[Dict[str, Any]] = None
 
-    division: DivisionRead = None
-    chapter: ChapterRead = None
-    paragraph: ParagraphRead = None
-    expense_group: ExpenseGroupRead = None
+    
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -101,8 +117,8 @@ class DepartmentTableDTO(BaseModel):
     id: int
     start: time
     end: time
-    department: DepartmentRead
     status: StatusRead
+    department: DepartmentRead
     rows: List[RowDTO] = []
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,3 +130,47 @@ class TableFullDTO(BaseModel):
     budget: float
     department_tables: List[DepartmentTableDTO] = []
     model_config = ConfigDict(from_attributes=True)
+
+HEADERS = [
+    "Część budżetowa",
+    "Dział",
+    "Rozdział",
+    "Paragraf",
+    "Źródło finansowania",
+    "Grupa wydatków",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    "Potrzeby finansowe na rok 2029",
+    "Limit wydatków na rok 2029",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    "Budżet zadaniowy (w pełnej szczegółowości)",
+    "Budżet zadaniowy (nr funkcji, nr zadania)",
+    "Nazwa programu/projektu",
+    "W przypadku dotacji - z kim zawarta umowa/planowana do zawarcia umowa",
+    "Nazwa komórki organizacyjnej",
+    "Podstawa prawna udzielenia dotacji",
+    "Plan WI",
+    "Dysponent środków",
+    "Budżet",
+    "Nazwa zadania",
+    "Szczegółowe uzasadnienie realizacji zadania",
+    "Przeznaczenie wydatków wg obszaru działalności: cyberbezpieczeństwo/sztuczna inteligencja/koszty funkcjonowania/inne (wpisać jakie?)",
+    "Potrzeby finansowe na rok 2026",
+    "Limit wydatków na rok 2026",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    "Potrzeby finansowe na rok 2027",
+    "Limit wydatków na rok 2027",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    "Potrzeby finansowe na rok 2028",
+    "Limit wydatków na rok 2028",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego"
+]
