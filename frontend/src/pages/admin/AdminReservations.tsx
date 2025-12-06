@@ -1,13 +1,13 @@
-import ManageReservations from '@/components/admin/reservations/ManageReservations';
+import MangeUser from '@/components/admin/MangedUsers';
 
-function AdminReservations() {
+function MangeUserPage() {
   return (
     <div>
       <div className="container flex flex-col items-center justify-center w-[80vw] margin-[5vh] gap-[2vw] pb-[10vh]">
-        <ManageReservations />
+        <MangeUser />
       </div>
     </div>
   );
 }
 
-export default AdminReservations;
+export default MangeUserPage;
