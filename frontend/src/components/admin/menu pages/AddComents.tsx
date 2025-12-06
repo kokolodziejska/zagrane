@@ -8,7 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type AddComentsPage from '@/pages/admin/dashboard/AddComentsPage';
+
+import { Checkbox } from '@/components/ui/checkbox';
 
 const tab = {
   headers: [
