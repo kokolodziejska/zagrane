@@ -8,7 +8,11 @@ export interface UserState {
   userId: number;
   userEmail: string;
   userName: string;
-  userSurname: string;
+  userSurname: string; 
+  departmentId: number;
+  departmentName: string;
+  userRole: string;
+
 
   pickedDate: string;
   pickedObjectId: number | null;
@@ -21,6 +25,10 @@ const initialState: UserState = {
   userEmail: '',
   userName: '',
   userSurname: '',
+  departmentId: 0,
+  departmentName: '',
+  userRole: '',
+
 
   pickedDate: today,
   pickedObjectId: null,
@@ -42,6 +50,9 @@ const userSlice = createSlice({
       state.userEmail = action.payload.userEmail;
       state.userName = action.payload.userName;
       state.userSurname = action.payload.userSurname;
+      state.departmentId = action.payload.departmentId;
+      state.departmentName = action.payload.departmentName;
+      state.userRole = action.payload.userRole;
     },
     logout: () => initialState,
 

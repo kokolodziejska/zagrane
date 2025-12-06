@@ -9,8 +9,8 @@ import { useState } from 'react';
 import { Formik, Field, Form } from 'formik';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useAppDispatch } from '@/store/hooks';
-import { setUserProfile } from '@/store/userState';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import userState, { setUserProfile } from '@/store/userState';
 
 function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
   const [loginError, setLoginError] = useState('');
@@ -50,9 +50,13 @@ function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
                   userEmail: data.email,
                   userName: data.name,
                   userSurname: data.surname,
+                  departmentId: data.departmentId,
+                  departmentName: data.department,
+                  userRole: data.role,
                 })
               );
             }
+            
             setLoginError('');
             if (data.role === 'admin') {
               navigate('/admin');
