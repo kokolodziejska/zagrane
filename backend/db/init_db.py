@@ -49,7 +49,7 @@ async def init_db():
             session.add(div)
             
             # 6. Budget Table Year
-            table = Tables(year=2024, version="v1.0", isOpen=True)
+            table = Tables(year=2024, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
             session.add(table)
 
             # 7. Authentication (Password)

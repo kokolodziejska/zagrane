@@ -7,18 +7,15 @@ from .database import Base
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import text
 
-# Enum dla ról użytkowników
 class UserRole(str, enum.Enum):
     user = "user"
     admin = "admin"
 
-# Tabela authentication
 class Authentication(Base):
     __tablename__ = "authentication"
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela users
 class Users(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -33,33 +30,29 @@ class Users(Base):
     department: Mapped["Departments"] = relationship("Departments", backref="users")
     user_type: Mapped["UserTypes"] = relationship("UserTypes", backref="users")
 
-# Tabela departments
 class Departments(Base):
     __tablename__ = "departments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     type: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela user_types
 class UserTypes(Base):
     __tablename__ = "user_types"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     type: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela tables
 class Tables(Base):
     __tablename__ = "tables"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     year: Mapped[float] = mapped_column(Numeric(4, 0), nullable=False)
     version: Mapped[str] = mapped_column(String, nullable=False)
     isOpen: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    budget: Mapped[float] = mapped_column(Numeric(15, 2), nullable=True)
 
-# Tabela statuses
 class Statuses(Base):
     __tablename__ = "statuses"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     value: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela department_tables
 class DepartmentTables(Base):
     __tablename__ = "department_tables"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -73,7 +66,6 @@ class DepartmentTables(Base):
     department: Mapped["Departments"] = relationship("Departments", backref="department_tables")
     status: Mapped["Statuses"] = relationship("Statuses", backref="department_tables")
 
-# Tabela rows
 class Rows(Base):
     __tablename__ = "rows"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -83,13 +75,11 @@ class Rows(Base):
 
     department_table: Mapped["DepartmentTables"] = relationship("DepartmentTables", backref="rows")
 
-# Tabela divisions
 class Divisions(Base):
     __tablename__ = "divisions"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     value: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela chapters
 class Chapters(Base):
     __tablename__ = "chapters"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -98,7 +88,6 @@ class Chapters(Base):
 
     division: Mapped["Divisions"] = relationship("Divisions", backref="chapters")
 
-# Tabela paragraphs
 class Paragraphs(Base):
     __tablename__ = "paragraphs"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -109,13 +98,11 @@ class Paragraphs(Base):
     chapter: Mapped["Chapters"] = relationship("Chapters", backref="paragraphs")
     expense_group: Mapped["ExpenseGroups"] = relationship("ExpenseGroups", backref="paragraphs")
 
-# Tabela expense_groups
 class ExpenseGroups(Base):
     __tablename__ = "expense_groups"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     definition: Mapped[str] = mapped_column(String, nullable=False)
 
-# Tabela row_datas
 class RowDatas(Base):
     __tablename__ = "row_datas"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
