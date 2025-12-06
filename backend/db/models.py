@@ -1,159 +1,168 @@
 from __future__ import annotations
 import enum
-
 from datetime import time, date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Enum, String, Integer, SmallInteger, Time, Date, Numeric, Text, ForeignKey, Boolean 
+from sqlalchemy import Enum, String, Integer, SmallInteger, Time, Date, Numeric, Text, ForeignKey, Boolean
 from .database import Base
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import text
 
-class Object(Base):
-    __tablename__ = "objects"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(120), nullable=False)
-    discipline: Mapped[str] = mapped_column(Text, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    opening_hour: Mapped[time] = mapped_column(Time, nullable=False, default=time(8, 0))
-    closing_hour: Mapped[time] = mapped_column(Time, nullable=False, default=time(20, 0))
-
-    time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=1.0)
-    minimal_time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=1.0)
-    maximal_time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=4.0)
-
-    # Object (1) -> (N) Reservations
-    reservations: Mapped[list["Reservations"]] = relationship( back_populates="object", cascade="all, delete-orphan", lazy="selectin",)
-    # Object (1) -> (N) Price
-    prices: Mapped[list["Price"]] = relationship( back_populates="object", cascade="all, delete-orphan", lazy="selectin",)
-
+# Enum dla ról użytkowników
 class UserRole(str, enum.Enum):
     user = "user"
     admin = "admin"
-    
-class Clients(Base):
-    __tablename__ = "clients"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    mail: Mapped[str] = mapped_column(String(254), nullable=False, unique=True)
-    name: Mapped[str] = mapped_column(String(220), nullable=False)
-    surname: Mapped[str] = mapped_column(String(220), nullable=False)
-
-    # relacje: Client (1) -> (N) Reservations
-    reservations: Mapped[list["Reservations"]] = relationship(
-        back_populates="client",           
-        cascade="all, delete-orphan",      
-        lazy="selectin",
-    )
-
-    # relacja 1-1 z UserAuth
-    auth: Mapped["UserAuth | None"] = relationship(
-        back_populates="client",          
-        uselist=False,
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-
-
-class UserAuth(Base):
+# Tabela authentication
+class Authentication(Base):
     __tablename__ = "authentication"
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    password: Mapped[str] = mapped_column(String, nullable=False)
 
-    # PK = FK → relacja 1-1 z Clients
-    client_id: Mapped[int] = mapped_column(
-        ForeignKey("clients.id", ondelete="CASCADE"),
-        primary_key=True,
-        index=True,
-    )
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.user)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    # relacja zwrotna do Clients.auth
-    client: Mapped[Clients] = relationship(back_populates="auth", lazy="selectin")
-
-
-class Reservations(Base):
-    __tablename__ = "reservations"
-
+# Tabela users
+class Users(Base):
+    __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    auth_id: Mapped[int] = mapped_column(ForeignKey("authentication.user_id"), nullable=False, unique=True)
+    user_name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    surname: Mapped[str] = mapped_column(String, nullable=False)
+    department_id: Mapped[int] = mapped_column(ForeignKey("departments.id"), nullable=False)
+    user_type_id: Mapped[int] = mapped_column(ForeignKey("user_types.id"), nullable=False)
 
-    client_id: Mapped[int] = mapped_column(ForeignKey("clients.id", ondelete="CASCADE"),  index=True, nullable=False,)
-    object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"),  index=True, nullable=False,)
+    auth: Mapped["Authentication"] = relationship("Authentication", backref="user", uselist=False)
+    department: Mapped["Departments"] = relationship("Departments", backref="users")
+    user_type: Mapped["UserTypes"] = relationship("UserTypes", backref="users")
 
-    date: Mapped[date] = mapped_column(Date, nullable=False)
-    hour: Mapped[time] = mapped_column(Time, nullable=False)
-    duration: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
-
-    split: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    players: Mapped[int] = mapped_column(Integer, nullable=False)
-    accepted_rule: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    
-    total: Mapped[float] = mapped_column(Numeric(10, 2, asdecimal=False), nullable=False)
-    user_total: Mapped[float] = mapped_column(Numeric(10, 2, asdecimal=False), nullable=False)
-    
-    # relacje zwrotne (N) -> (1)
-    client: Mapped[Clients] = relationship(back_populates="reservations", lazy="selectin")
-    object: Mapped[Object] = relationship(back_populates="reservations", lazy="selectin")
-    
-class Price(Base):
-    __tablename__ = "prices"
-    
+# Tabela departments
+class Departments(Base):
+    __tablename__ = "departments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    price_table: Mapped[int] = mapped_column(Integer, index=True)
+    type: Mapped[str] = mapped_column(String, nullable=False)
 
-    object_id: Mapped[int] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"),  index=True, nullable=False,)
-
-    valid_from: Mapped[date] = mapped_column(Date, nullable=False)
-    valid_to: Mapped[date] = mapped_column(Date, nullable=False)
-    
-    day_mask: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=127)
-
-    start_hour: Mapped[time] = mapped_column(Time, nullable=False)
-    end_hour: Mapped[time] = mapped_column(Time, nullable=False)
-    
-    duration: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    
-    price: Mapped[float] = mapped_column(Numeric(10, 2, asdecimal=False), nullable=False)
-    price_with_pass: Mapped[float | None] = mapped_column(Numeric(10, 2, asdecimal=False), nullable=True)
-
-    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="PLN")
-    
-    # relacje zwrotne (N) -> (1)
-    object: Mapped["Object"] = relationship(back_populates="prices", lazy="selectin")
-
-class PriceConfig(Base):
-    __tablename__ = "price_configs"
-    
+# Tabela user_types
+class UserTypes(Base):
+    __tablename__ = "user_types"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    config: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    type: Mapped[str] = mapped_column(String, nullable=False)
 
-class Discipline(Base):
-    __tablename__ = "discipline"
-
+# Tabela tables
+class Tables(Base):
+    __tablename__ = "tables"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(220), nullable=False, unique=True)
-    is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    year: Mapped[float] = mapped_column(Numeric(4, 0), nullable=False)
+    version: Mapped[str] = mapped_column(String, nullable=False)
+    isOpen: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-
-class Global(Base):
-    __tablename__ = "global"
-
+# Tabela statuses
+class Statuses(Base):
+    __tablename__ = "statuses"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    opening_hour: Mapped[time] = mapped_column(Time, nullable=False, default=time(8, 0))
-    closing_hour: Mapped[time] = mapped_column(Time, nullable=False, default=time(20, 0))
+    value: Mapped[str] = mapped_column(String, nullable=False)
 
-    time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=1.0)
-    minimal_time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=1.0)
-    maximal_time_block: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=4.0)
-    min_cancel_time: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=24.0)
-    currency: Mapped[str] = mapped_column(String(220), nullable=False, unique=True)
+# Tabela department_tables
+class DepartmentTables(Base):
+    __tablename__ = "department_tables"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    table_id: Mapped[int] = mapped_column(ForeignKey("tables.id"), nullable=False)
+    department_id: Mapped[int] = mapped_column(ForeignKey("departments.id"), nullable=False)
+    status_id: Mapped[int] = mapped_column(ForeignKey("statuses.id"), nullable=False)
+    start: Mapped[time] = mapped_column(Time, nullable=False)
+    end: Mapped[time] = mapped_column(Time, nullable=False)
 
-    min_booking_advance_time: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False, default=2.0)
-    default_players: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    table: Mapped["Tables"] = relationship("Tables", backref="department_tables")
+    department: Mapped["Departments"] = relationship("Departments", backref="department_tables")
+    status: Mapped["Statuses"] = relationship("Statuses", backref="department_tables")
 
-    default_discipline_id: Mapped[int | None] = mapped_column(
-        ForeignKey("discipline.id", ondelete="SET NULL"), nullable=True
-    )
-    # relacje
-    default_discipline: Mapped["Discipline"] = relationship("Discipline")
+# Tabela rows
+class Rows(Base):
+    __tablename__ = "rows"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    department_table_id: Mapped[int] = mapped_column(ForeignKey("department_tables.id"), nullable=False)
+    last_update: Mapped[time] = mapped_column(Time, nullable=False)
+    next_year: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    department_table: Mapped["DepartmentTables"] = relationship("DepartmentTables", backref="rows")
+
+# Tabela divisions
+class Divisions(Base):
+    __tablename__ = "divisions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    value: Mapped[str] = mapped_column(String, nullable=False)
+
+# Tabela chapters
+class Chapters(Base):
+    __tablename__ = "chapters"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    division_id: Mapped[int] = mapped_column(ForeignKey("divisions.id"), nullable=False)
+    value: Mapped[str] = mapped_column(String, nullable=False)
+
+    division: Mapped["Divisions"] = relationship("Divisions", backref="chapters")
+
+# Tabela paragraphs
+class Paragraphs(Base):
+    __tablename__ = "paragraphs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    chapter_id: Mapped[int] = mapped_column(ForeignKey("chapters.id"), nullable=False)
+    expense_group_id: Mapped[int] = mapped_column(ForeignKey("expense_groups.id"), nullable=False)
+    value: Mapped[str] = mapped_column(String, nullable=False)
+
+    chapter: Mapped["Chapters"] = relationship("Chapters", backref="paragraphs")
+    expense_group: Mapped["ExpenseGroups"] = relationship("ExpenseGroups", backref="paragraphs")
+
+# Tabela expense_groups
+class ExpenseGroups(Base):
+    __tablename__ = "expense_groups"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    definition: Mapped[str] = mapped_column(String, nullable=False)
+
+# Tabela row_datas
+class RowDatas(Base):
+    __tablename__ = "row_datas"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    row_id: Mapped[int] = mapped_column(ForeignKey("rows.id"), nullable=False)
+    last_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    last_update: Mapped[time] = mapped_column(Time, nullable=False)
+
+    budget_part: Mapped[str] = mapped_column(String(2), nullable=False)
+    division_id: Mapped[int] = mapped_column(ForeignKey("divisions.id"), nullable=False)
+    chapter_id: Mapped[int] = mapped_column(ForeignKey("chapters.id"), nullable=False)
+    paragraph_id: Mapped[int] = mapped_column(ForeignKey("paragraphs.id"), nullable=False)
+    funding_source: Mapped[str] = mapped_column(String(1), nullable=True)
+    expense_group_id: Mapped[int] = mapped_column(ForeignKey("expense_groups.id"), nullable=False)
+    task_budget_full: Mapped[str] = mapped_column(String(8), nullable=False)
+    task_budget_function_task: Mapped[str] = mapped_column(String(5), nullable=False)
+    program_project_name: Mapped[str] = mapped_column(String, nullable=True)
+    organizational_unit_name: Mapped[str] = mapped_column(String, nullable=True)
+    plan_wi: Mapped[str] = mapped_column(String, nullable=True)
+    fund_distributor: Mapped[str] = mapped_column(String, nullable=True)
+    budget_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    task_name: Mapped[str] = mapped_column(String, nullable=True)
+    task_justification: Mapped[str] = mapped_column(String, nullable=True)
+    expenditure_purpose: Mapped[str] = mapped_column(String, nullable=True)
+    financial_needs_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    expenditure_limit_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    unallocated_task_funds_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_amount_0: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    financial_needs_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    expenditure_limit_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    unallocated_task_funds_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_amount_1: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    financial_needs_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    expenditure_limit_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    unallocated_task_funds_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_amount_2: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    financial_needs_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    expenditure_limit_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    unallocated_task_funds_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_amount_3: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    contract_number: Mapped[str] = mapped_column(String, nullable=True)
+    subsidy_agreement_party: Mapped[str] = mapped_column(String, nullable=True)
+    legal_basis_for_subsidy: Mapped[str] = mapped_column(String, nullable=True)
+    notes: Mapped[str] = mapped_column(String, nullable=True)
+    additionals: Mapped[dict] = mapped_column(JSONB, nullable=True)
+
+    row: Mapped["Rows"] = relationship("Rows", backref="row_datas")
+    division: Mapped["Divisions"] = relationship("Divisions", backref="row_datas")
+    chapter: Mapped["Chapters"] = relationship("Chapters", backref="row_datas")
+    paragraph: Mapped["Paragraphs"] = relationship("Paragraphs", backref="row_datas")
+    expense_group: Mapped["ExpenseGroups"] = relationship("ExpenseGroups", backref="row_datas")

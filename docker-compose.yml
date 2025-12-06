@@ -15,6 +15,8 @@ services:
     restart: unless-stopped
     networks:
       - reservation-network
+    ports:
+      - "5432:5432"
 
   backend:
     build:

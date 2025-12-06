@@ -3,11 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from db.init_db import init_db
 
-from api.objects import router as objects_router
 from api.user import router as user_router
-from api.reservations import router as reservation_router
-from api.prices import router as prices_router
-from api.global_settings import router as global_router
 
 app = FastAPI()
 
@@ -32,8 +28,4 @@ def test2():
 async def on_startup():
     await init_db()
     
-app.include_router(objects_router) 
 app.include_router(user_router) 
-app.include_router(reservation_router)
-app.include_router(prices_router)
-app.include_router(global_router)

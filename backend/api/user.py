@@ -1,36 +1,37 @@
-from fastapi import APIRouter, Depends, HTTPException, Cookie
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import os
+import re
+import jwt
+from datetime import datetime, timedelta, timezone
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException, Cookie, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+# Removed EmailStr since we are using generic username now
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
-
-from pydantic import BaseModel, EmailStr
-from db.database import get_db
-from db.models import Clients
-from db.models import UserAuth
-import re
-
 from passlib.hash import argon2
 
-import jwt
-import os
-from datetime import datetime, timedelta, timezone
+# Adjust these imports to point to your actual file location
+from db.database import get_db
+from db.models import Users, Authentication, Departments, UserTypes
 
-SECRET_KEY = os.getenv("JWT_SECRET", "jakis-ciag-znakow")   ## w wersji produkcyjnej do zmiany na os.environ["JWT_SECRET"]
+SECRET_KEY = os.getenv("JWT_SECRET", "jakis-ciag-znakow")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRE_MIN", "60"))
 COOKIE_NAME = "access_token" 
 
-
+# --- UTILS ---
 def hash_password(password: str) -> str:
     return argon2.hash(password)
 
 def verify_password(password: str, password_hash: str) -> bool:
     return argon2.verify(password, password_hash)
 
-def validate_password(password: str) -> str:
+def validate_password(password: str) -> str | None:
     if len(password) < 8:
         return "Hasło musi mieć min. 8 znaków"
     if not re.search(r"[A-Z]", password):
@@ -43,12 +44,12 @@ def validate_password(password: str) -> str:
         return "Hasło musi posiadać przynajmniej jeden znak specjalny"
     return None
 
-def validate_name(name: str) -> str:
+def validate_name(name: str) -> str | None:
     if len(name)<2 or len(name)>15:
         return "Imię musi mieć min. 2 znaki i max. 15 znaków"
     return None
 
-def validate_surname(surname: str) -> str:
+def validate_surname(surname: str) -> str | None:
     if len(surname)<2 or len(surname)>15:
         return "Nazwisko musi mieć min. 2 znaki i max. 15 znaków"
     return None
@@ -64,72 +65,112 @@ def create_access_token(user_id: int, user_data: dict | None = None, expires_min
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-def decode_access_token(token: str) ->dict:
+def decode_access_token(token: str) -> dict:
     return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-
-
+# --- ROUTER ---
 router = APIRouter(prefix="/api/user", tags=["user"])
 
+# --- MODELS (DTOs) ---
+
+# Changed email -> username
 class UserCreate(BaseModel):
-    email: EmailStr
+    username: str 
     name: str
     surname: str
     password: str
-
-@router.post("/register")
-async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    
-    user.email = user.email.lower().strip()
-    user.name = user.name.strip()
-    user.surname = user.surname.strip()
-    
-    result = await db.execute(select(Clients).where(Clients.mail == user.email))
-    existing = result.scalars().first()
-    if existing:
-        raise HTTPException(status_code=409, detail="Istnieje konto zarejestrowane na ten Email")
-
-    name_error = validate_name(user.name)
-    if name_error:
-        raise HTTPException(status_code=400, detail=name_error)
-    
-    surname_error = validate_surname(user.surname)
-    if surname_error:
-        raise HTTPException(status_code=400, detail=surname_error)
-    
-    password_error = validate_password(user.password)
-    if password_error:
-        raise HTTPException(status_code=400, detail=password_error)
-        
-    new_client = Clients(
-         mail = user.email,
-         name = user.name,
-         surname = user.surname
-    )
-    db.add(new_client)
-    await db.flush()
-
-    new_password_hash = hash_password(user.password)
-    
-    new_user_auth = UserAuth (client_id = new_client.id, password_hash = new_password_hash,  role="user", is_active=True)
-    db.add(new_user_auth)
-    
-    try:
-        await db.commit()
-    except IntegrityError:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail="Błąd zapisu użytkownika")
-    
-    return {"id": new_client.id, "email": new_client.mail, "name": new_client.name}
-
 
 class ChangeDetails(BaseModel):
     name: str
     surname: str
 
+# Changed email -> username
+class UserRead(BaseModel):
+    id: int
+    username: str
+    name: str
+    surname: str
+
+# Changed email -> username
+class UserValidate(BaseModel):
+    username: str
+    password: str
+
+
+# --- ENDPOINTS ---
+
+@router.post("/register")
+async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+    
+    # Clean inputs
+    username_clean = user.username.strip() # Removed .lower() if case sensitivity matters for usernames
+    name_clean = user.name.strip()
+    surname_clean = user.surname.strip()
+    
+    # 1. Check if user exists (using user_name column)
+    result = await db.execute(select(Users).where(Users.user_name == username_clean))
+    existing = result.scalars().first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Nazwa użytkownika jest już zajęta")
+
+    # 2. Validate format
+    if error := validate_name(name_clean):
+        raise HTTPException(status_code=400, detail=error)
+    
+    if error := validate_surname(surname_clean):
+        raise HTTPException(status_code=400, detail=error)
+    
+    if error := validate_password(user.password):
+        raise HTTPException(status_code=400, detail=error)
+        
+    # 3. Get Default Foreign Keys (Type & Dept)
+    res_type = await db.execute(select(UserTypes).where(UserTypes.type.in_(['user', 'employee'])))
+    default_type = res_type.scalars().first()
+    if not default_type:
+        # Fallback to any type if specific ones aren't found
+        res_any_type = await db.execute(select(UserTypes))
+        default_type = res_any_type.scalars().first()
+        if not default_type:
+             raise HTTPException(status_code=500, detail="Błąd konfiguracji: brak ról użytkowników.")
+
+    res_dept = await db.execute(select(Departments))
+    default_dept = res_dept.scalars().first()
+    if not default_dept:
+        raise HTTPException(status_code=500, detail="Błąd konfiguracji: brak działów.")
+
+    try:
+        # 4. Create Authentication Record FIRST (to get the PK)
+        new_password_hash = hash_password(user.password)
+        new_auth = Authentication(password=new_password_hash)
+        db.add(new_auth)
+        # Flush sends query to DB and populates new_auth.user_id, but doesn't commit transaction yet
+        await db.flush() 
+
+        # 5. Create User Record linked to Auth
+        new_user = Users(
+            auth_id=new_auth.user_id, # Link using the ID generated above
+            user_name=username_clean, 
+            name=name_clean,
+            surname=surname_clean,
+            department_id=default_dept.id,
+            user_type_id=default_type.id
+        )
+        db.add(new_user)
+        await db.commit()
+        
+        return {"id": new_user.id, "username": new_user.user_name, "name": new_user.name}
+
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Błąd zapisu użytkownika")
+
 
 @router.post("/change-details")
-async def change_details( user: ChangeDetails, db: AsyncSession = Depends(get_db), access_token: str = Cookie(None),):
+async def change_details(
+    user: ChangeDetails, 
+    db: AsyncSession = Depends(get_db), 
+    access_token: str | None = Cookie(default=None, alias=COOKIE_NAME)
+):
     if not access_token:
         raise HTTPException(status_code=401, detail="Brak tokenu")
 
@@ -139,107 +180,129 @@ async def change_details( user: ChangeDetails, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=401, detail="Token wygasł")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Niepoprawny token")
-    except Exception:
-        raise HTTPException(status_code=401, detail="Niepoprawny token")
 
     user_id = payload.get("sub")
-    user_id_raw = payload.get("sub")
-    try:
-        user_id = int(user_id_raw)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=401, detail="Niepoprawny token")
-        
-    res = await db.execute(select(Clients).where(Clients.id == user_id))
-    client = res.scalars().first()
-    if not client:
+    
+    # Fetch user by ID
+    res = await db.execute(select(Users).where(Users.id == int(user_id)))
+    db_user = res.scalars().first()
+    
+    if not db_user:
         raise HTTPException(status_code=404, detail="Nie znaleziono użytkownika")
 
-    name = (user.name or "").strip()
-    surname = (user.surname or "").strip()
+    name_clean = (user.name or "").strip()
+    surname_clean = (user.surname or "").strip()
 
-  
-    name_error = validate_name(name)
-    if name_error:
-        raise HTTPException(status_code=400, detail=name_error)
+    if error := validate_name(name_clean):
+        raise HTTPException(status_code=400, detail=error)
 
-    surname_error = validate_surname(surname)
-    if surname_error:
-        raise HTTPException(status_code=400, detail=surname_error)
+    if error := validate_surname(surname_clean):
+        raise HTTPException(status_code=400, detail=error)
 
-
-    client.name = name
-    client.surname = surname          
+    db_user.name = name_clean
+    db_user.surname = surname_clean
 
     try:
         await db.commit()
+        await db.refresh(db_user)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Błąd zapisu użytkownika")
+        raise HTTPException(status_code=500, detail="Błąd zapisu danych")
     
-    await db.refresh(client)
-
     return {
         "ok": True,
         "user": {
-            "id": client.id,
-            "name": client.name,
-            "surname": client.surname,
-            "email": client.mail,
+            "id": db_user.id,
+            "name": db_user.name,
+            "surname": db_user.surname,
+            "username": db_user.user_name,
         },
     }
 
 
-
-class UserRead(BaseModel):
-    id: int
-    email: EmailStr
-    name: str
-    surname: str
-
 @router.get("/all-users", response_model=List[UserRead])
 async def get_all_users(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Clients))
-    clients = result.scalars().all()
+    result = await db.execute(select(Users))
+    users = result.scalars().all()
     return [
         UserRead(
-            id=o.id,
-            email=o.mail,
-            name=o.name,
-            surname=o.surname,
+            id=u.id,
+            username=u.user_name, # Map user_name to username
+            name=u.name,
+            surname=u.surname,
         )
-        for o in clients
+        for u in users
     ]
-    
-class UserValidate(BaseModel):
-    email: EmailStr
-    password: str
+
 
 @router.post("/login")
 async def login_user(user: UserValidate, db: AsyncSession = Depends(get_db)):
-    
-    user.email = user.email.lower().strip()
+    username_clean = user.username.strip()
      
-    cli = await db.execute(select(Clients).where(Clients.mail == user.email))
-    client = cli.scalars().first()
-    if not client:
-        raise HTTPException(status_code=401, detail="Nieprawidłowy email lub hasło.")
+    # Join necessary tables to get role and password
+    query = (
+        select(Users)
+        .options(
+            selectinload(Users.auth),
+            selectinload(Users.user_type),
+            selectinload(Users.department)
+        )
+        .where(Users.user_name == username_clean) # Search by user_name
+    )
     
-    aut =  await db.execute(select(UserAuth).where(UserAuth.client_id == client.id))
-    client_aut = aut.scalars().first()
-    
-    if not client_aut or not verify_password(user.password, client_aut.password_hash):
-         raise HTTPException(status_code=401, detail="Nieprawidłowy email lub hasło.")
-     
+    result = await db.execute(query)
+    db_user = result.scalars().first()
 
-    token = create_access_token(user_id=client.id, user_data={"name": client.name, "surname": client.surname, "email": client.mail, "role": client_aut.role})
+    # Verify user exists and has auth record
+    if not db_user or not db_user.auth:
+        raise HTTPException(status_code=401, detail="Nieprawidłowy login lub hasło.")
     
-    payload = {"success": True, "clientId": client.id, "name": client.name, "surname": client.surname, "email": client.mail, "role": client_aut.role}
+    # Verify password
+    if not verify_password(user.password, db_user.auth.password):
+         raise HTTPException(status_code=401, detail="Nieprawidłowy login lub hasło.")
+     
+    # Helper variables
+    user_role = db_user.user_type.type if db_user.user_type else "unknown"
+    dept_name = db_user.department.type if db_user.department else "unknown"
+    dept_id = db_user.department_id
+
+    # Create Token with username
+    token_data = {
+        "name": db_user.name, 
+        "surname": db_user.surname, 
+        "username": db_user.user_name, 
+        "role": user_role,
+        "departmentId": dept_id
+    }
+    
+    token = create_access_token(user_id=db_user.id, user_data=token_data)
+    
+    # Return full object for Frontend state
+    payload = {
+        "success": True, 
+        "clientId": db_user.id, 
+        "name": db_user.name, 
+        "surname": db_user.surname, 
+        "username": db_user.user_name, 
+        "role": user_role,
+        "departmentId": dept_id,
+        "departmentName": dept_name
+    }
     
     response = JSONResponse(content=payload, status_code=200)
-    response.set_cookie(key=COOKIE_NAME, value=token, httponly=True, samesite="lax", secure=False, max_age=60*60, path="/",)  ## w prod secure=True, jak będzie działal https
+    response.set_cookie(
+        key=COOKIE_NAME, 
+        value=token, 
+        httponly=True, 
+        samesite="lax", 
+        secure=False, 
+        max_age=60*60, 
+        path="/"
+    )
     
     return response
 
+# Logout and check_login remain mostly the same, just updated variable names in payload
 @router.post("/logout")
 async def logout_user():
     response = JSONResponse(content={"success": True})
@@ -248,7 +311,7 @@ async def logout_user():
 
 
 @router.get("/is_login")
-async def is_user_login(access_token: str = Cookie(None)):
+async def is_user_login(access_token: str | None = Cookie(default=None, alias=COOKIE_NAME)):
     if not access_token:
         return {"islogin": False, "user": None}
     
@@ -259,6 +322,16 @@ async def is_user_login(access_token: str = Cookie(None)):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Niepoprawny token")
     except Exception:
-        raise HTTPException(status_code=401, detail="Niepoprawny token")
+        raise HTTPException(status_code=401, detail="Błąd tokenu")
     
-    return {"islogin": True,   "user": {"id": payload.get("sub"), "name": payload.get("name"),  "surname": payload.get("surname"), "email": payload.get("email")}}
+    return {
+        "islogin": True,   
+        "user": {
+            "id": payload.get("sub"), 
+            "name": payload.get("name"),  
+            "surname": payload.get("surname"), 
+            "username": payload.get("username"),
+            "role": payload.get("role"),
+            "departmentId": payload.get("departmentId")
+        }
+    }
