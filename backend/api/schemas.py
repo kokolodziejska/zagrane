@@ -1,0 +1,116 @@
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional, Dict, Any
+from datetime import time
+from decimal import Decimal
+
+class DivisionRead(BaseModel):
+    id: int
+    value: str
+    model_config = ConfigDict(from_attributes=True)
+
+class ChapterRead(BaseModel):
+    id: int
+    value: str
+    model_config = ConfigDict(from_attributes=True)
+
+class ParagraphRead(BaseModel):
+    id: int
+    value: str
+    model_config = ConfigDict(from_attributes=True)
+
+class ExpenseGroupRead(BaseModel):
+    id: int
+    definition: str
+    model_config = ConfigDict(from_attributes=True)
+
+class DepartmentRead(BaseModel):
+    id: int
+    type: str
+    model_config = ConfigDict(from_attributes=True)
+
+class StatusRead(BaseModel):
+    id: int
+    value: str
+    model_config = ConfigDict(from_attributes=True)
+
+class RowDataDTO(BaseModel):
+    id: int
+    row_id: int
+    last_user_id: int
+    last_update: time
+
+    budget_part: str
+    division_id: int
+    funding_source: Optional[str] = None
+
+    task_budget_full: str
+    task_budget_function_task: str
+    program_project_name: Optional[str] = None
+    organizational_unit_name: Optional[str] = None
+    plan_wi: Optional[str] = None
+    fund_distributor: Optional[str] = None
+    
+    budget_amount: Decimal
+    
+    task_name: Optional[str] = None
+    task_justification: Optional[str] = None
+    expenditure_purpose: Optional[str] = None
+
+    financial_needs_0: Decimal
+    expenditure_limit_0: Decimal
+    unallocated_task_funds_0: Decimal
+    contract_amount_0: Decimal
+
+    financial_needs_1: Decimal
+    expenditure_limit_1: Decimal
+    unallocated_task_funds_1: Decimal
+    contract_amount_1: Decimal
+
+    financial_needs_2: Decimal
+    expenditure_limit_2: Decimal
+    unallocated_task_funds_2: Decimal
+    contract_amount_2: Decimal
+
+    financial_needs_3: Decimal
+    expenditure_limit_3: Decimal
+    unallocated_task_funds_3: Decimal
+    contract_amount_3: Decimal
+
+    contract_number: Optional[str] = None
+    subsidy_agreement_party: Optional[str] = None
+    legal_basis_for_subsidy: Optional[str] = None
+    notes: Optional[str] = None
+    
+    additionals: Optional[Dict[str, Any]] = None
+
+    division: DivisionRead = None
+    chapter: ChapterRead = None
+    paragraph: ParagraphRead = None
+    expense_group: ExpenseGroupRead = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class RowDTO(BaseModel):
+    id: int
+    last_update: time
+    next_year: bool
+    row_datas: List[RowDataDTO] = []
+    model_config = ConfigDict(from_attributes=True)
+
+class DepartmentTableDTO(BaseModel):
+    id: int
+    start: time
+    end: time
+    department: DepartmentRead
+    status: StatusRead
+    rows: List[RowDTO] = []
+    model_config = ConfigDict(from_attributes=True)
+
+class TableFullDTO(BaseModel):
+    id: int
+    year: float
+    version: str
+    isOpen: bool
+    budget: float
+    department_tables: List[DepartmentTableDTO] = []
+    model_config = ConfigDict(from_attributes=True)
