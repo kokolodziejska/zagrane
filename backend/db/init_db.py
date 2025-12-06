@@ -39,7 +39,12 @@ async def init_db():
             div = Divisions(value="750")
             session.add(div)
             
+<<<<<<< HEAD
             table = Tables(year=this_year, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
+=======
+            # 6. Budget Table Year
+            table = Tables(year=2024, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
+>>>>>>> 6e18f01d5beb5b3c697d67ab765298ce87e5952e
             session.add(table)
 
             hashed_pw = argon2.hash("123") 
