@@ -32,7 +32,7 @@ function ContentSideBarMenu() {
             to="/admin/zarzadzajRezerwacjami"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            Nanieś limity
+            Zarządzaj budżetem
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -40,10 +40,10 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/zarzadzajRezerwacjami"
+            to="/admin/limity-budrzetu"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
-            Zarządzaj budżetem
+            Limity budrzetu
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>

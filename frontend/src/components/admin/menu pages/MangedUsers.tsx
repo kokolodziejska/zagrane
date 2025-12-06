@@ -56,11 +56,11 @@ function MangeUser() {
                     <Field name="name">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="name">Nazwa użytkonika</Label>
+                          <Label htmlFor="name">Imię</Label>
                           <Input
                             id="name"
                             type="string"
-                            placeholder="jan.kowalski"
+                            placeholder="Jan"
                             {...field}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -81,11 +81,11 @@ function MangeUser() {
                     <Field name="surname">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="surname">Nazwa użytkonika</Label>
+                          <Label htmlFor="surname">Nazwisko</Label>
                           <Input
                             id="surname"
                             type="string"
-                            placeholder="jan.kowalski"
+                            placeholder="Kowalski"
                             {...field}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -106,11 +106,11 @@ function MangeUser() {
                     <Field name="department_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="department_id">Nazwa użytkonika</Label>
+                          <Label htmlFor="department_id">Dział</Label>
                           <Input
                             id="department_id"
                             type="string"
-                            placeholder="jan.kowalski"
+                            placeholder="min cyf"
                             {...field}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -131,11 +131,11 @@ function MangeUser() {
                     <Field name="user_type_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="user_type_id">Nazwa użytkonika</Label>
+                          <Label htmlFor="user_type_id">Ttyp użytkownika</Label>
                           <Input
                             id="user_type_id"
                             type="string"
-                            placeholder="jan.kowalski"
+                            placeholder="admin"
                             {...field}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();

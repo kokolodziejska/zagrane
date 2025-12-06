@@ -32,6 +32,6 @@
     "src",
     "src/components/admin/.tsx",
     "src/components/admin/pricesettings/.tsx",
-    "src/pages/admin/MangeUserPage.tsx"
+    "src/pages/admin/dashboard/MangeUserPage.tsx"
   ]
 }
