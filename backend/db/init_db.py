@@ -5,7 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import argon2
 
-# Adjust these imports to match your project structure
 from .database import engine, Base, AsyncSessionLocal
 from .models import (
     Authentication, Users, Departments, UserTypes, Tables, 
@@ -17,43 +16,32 @@ async def init_db():
     print("--- Starting Database Initialization ---")
     
     async with engine.begin() as conn:
-        # 1. HARD RESET (Drop all to fix schema issues)
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         print("Schema recreated successfully.")
 
     async with AsyncSessionLocal() as session:
         try:
-            # ==========================================
-            # LEVEL 1: Dictionaries (No dependencies)
-            # ==========================================
-            
-            # 1. User Type
+            this_year = date.today().year;
+
             u_type = UserTypes(type="admin")
             session.add(u_type)
             
-            # 2. Department
-            dept = Departments(type="IT Department")
+            dept = Departments(type="Departament A")
             session.add(dept)
             
-            # 3. Status
             stat = Statuses(value="Active")
             session.add(stat)
             
-            # 4. Expense Group
-            exp_group = ExpenseGroups(definition="Salaries & Wages")
+            exp_group = ExpenseGroups(definition="wydatki bieżące jednostek budżetowych")
             session.add(exp_group)
             
-            # 5. Division
             div = Divisions(value="750")
             session.add(div)
             
-            # 6. Budget Table Year
-            table = Tables(year=2024, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
+            table = Tables(year=this_year, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
             session.add(table)
 
-            # 7. Authentication (Password)
-            # In real app, hash this!
             hashed_pw = argon2.hash("123") 
             auth = Authentication(password=hashed_pw) 
             session.add(auth)
@@ -104,7 +92,7 @@ async def init_db():
             paragraph = Paragraphs(
                 chapter_id=chapter.id,
                 expense_group_id=exp_group.id,
-                value="4010"
+                value="400"
             )
             session.add(paragraph)
 
@@ -130,41 +118,50 @@ async def init_db():
                 last_update=time(12, 30),
                 
                 # Foreign Keys to Classification
-                budget_part="01",
+                budget_part="1",
                 division_id=div.id,
                 chapter_id=chapter.id,
                 paragraph_id=paragraph.id,
                 expense_group_id=exp_group.id,
                 
                 # Required Data Fields
-                task_budget_full="TASK001",
-                task_budget_function_task="FUNC1",
+                task_budget_full="1.1.1.1.",
+                task_budget_function_task="1.1.",
                 funding_source="A",
                 budget_amount=Decimal("100000.00"),
+
                 
                 # Financials - Year 0
                 financial_needs_0=Decimal("50000.00"),
                 expenditure_limit_0=Decimal("50000.00"),
                 unallocated_task_funds_0=Decimal("0.00"),
                 contract_amount_0=Decimal("12000.00"),
+                contract_number_0="Nie dotyczy",
+
                 
                 # Financials - Year 1
                 financial_needs_1=Decimal("25000.00"),
                 expenditure_limit_1=Decimal("25000.00"),
                 unallocated_task_funds_1=Decimal("0.00"),
                 contract_amount_1=Decimal("0.00"),
+                contract_number_1="Nie dotyczy",
+
 
                 # Financials - Year 2
                 financial_needs_2=Decimal("25000.00"),
                 expenditure_limit_2=Decimal("25000.00"),
                 unallocated_task_funds_2=Decimal("0.00"),
                 contract_amount_2=Decimal("0.00"),
+                contract_number_2="Nie dotyczy",
+
 
                 # Financials - Year 3
                 financial_needs_3=Decimal("0.00"),
                 expenditure_limit_3=Decimal("0.00"),
                 unallocated_task_funds_3=Decimal("0.00"),
                 contract_amount_3=Decimal("0.00"),
+                contract_number_3="Nie dotyczy",
+
                 
                 # Optional text fields
                 task_name="Server Maintenance",

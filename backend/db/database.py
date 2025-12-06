@@ -2,7 +2,7 @@ import os
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-DATABASE_URL = os.getenv( "DATABASE_URL")
+DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/reservation" # os.getenv( "DATABASE_URL")
 
 engine = create_async_engine( 
     DATABASE_URL,
@@ -12,13 +12,13 @@ engine = create_async_engine(
 
 AsyncSessionLocal = async_sessionmaker(  
     bind=engine,
-    autoflush=False,  # nie wypycha zmian automatycznie przed SELECT
-    expire_on_commit=False,  # po commit obiekty są świeże
+    autoflush=False,  
+    expire_on_commit=False, 
     class_=AsyncSession,
 )
 
-Base = declarative_base()  # klasa bazowa
+Base = declarative_base()  
 
-async def get_db():  # każdy request ma własną, niezależną sesję do bazy
+async def get_db(): 
     async with AsyncSessionLocal() as session:
         yield session

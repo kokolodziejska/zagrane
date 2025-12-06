@@ -7,7 +7,6 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Cookie, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-# Removed EmailStr since we are using generic username now
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

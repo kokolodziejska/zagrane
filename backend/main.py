@@ -1,14 +1,28 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from db.init_db import init_db
+import uvicorn
 
+
+from db.init_db import init_db
 from api.user import router as user_router
 from api.table import router as table_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("--- Startup: Inicjalizacja bazy danych ---")
+    await init_db()
+    
+    yield  
+    
+    print("--- Shutdown: Zamykanie aplikacji ---")
 
-origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else ["http://localhost:5173"]
+app = FastAPI(lifespan=lifespan)
+
+origins_raw = os.getenv("CORS_ORIGINS")
+origins = origins_raw.split(",") if origins_raw else ["http://localhost:5173"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in origins],
@@ -25,9 +39,5 @@ def health():
 def test2():
     return {"status": "ok"}
 
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
-    
 app.include_router(user_router) 
 app.include_router(table_router)
