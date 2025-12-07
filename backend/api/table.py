@@ -1,15 +1,16 @@
 from api.schemas import TableFullDTO
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload, with_loader_criteria
-from typing import List
+from api.user import get_current_user
 from api.schemas import HEADERS
 from api.excel import generete_excel
 from db.database import get_db, AsyncSessionLocal
-from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapters, Paragraphs, ExpenseGroups
-from fastapi.responses import StreamingResponse
+from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapters, Paragraphs, ExpenseGroups, Users
+from fastapi.responses import RedirectResponse, StreamingResponse
 from io import BytesIO
+from typing import List
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
 
@@ -187,7 +188,20 @@ async def get_table_headers():
     return HEADERS
 
 @router.get("/{table_id}", response_model=TableFullDTO)
-async def get_table_hierarchy(table_id: int, db: AsyncSession = Depends(get_db)):
+async def get_table_hierarchy(
+    table_id: int, 
+    db: AsyncSession = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    if current_user.user_type.type != "admin":
+        if not current_user.department_id:
+            raise HTTPException(status_code=403, detail="User has no assigned department")
+        
+        return RedirectResponse(
+            url=f"/api/tables/{table_id}/departments/{current_user.department_id}", 
+            status_code=307
+        )
+
     query = (
         select(Tables)
         .where(Tables.id == table_id)
@@ -217,6 +231,8 @@ async def get_table_hierarchy(table_id: int, db: AsyncSession = Depends(get_db))
         raise HTTPException(status_code=404, detail="Table not found")
 
     return table
+
+
 
 
 
