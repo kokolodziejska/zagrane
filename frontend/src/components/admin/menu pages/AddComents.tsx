@@ -132,7 +132,7 @@ function AddComents() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[75vw]">
+      <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[75vw] mt-[4vh]">
       <Table className="min-w-max w-full">
         <TableHeader className="bg-gray-100 sticky top-0 z-10">
           <TableRow>
