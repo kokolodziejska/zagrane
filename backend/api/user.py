@@ -7,10 +7,11 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Cookie, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import selectinload, joinedload, with_loader_criteria
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload,joinedload
 from sqlalchemy.exc import IntegrityError
 from passlib.hash import argon2
 
@@ -367,3 +368,45 @@ async def is_user_login(access_token: str | None = Cookie(default=None, alias=CO
             "departmentId": payload.get("departmentId")
         }
     }
+
+async def get_current_user(
+    access_token: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    db: AsyncSession = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+
+    if not access_token:
+        raise credentials_exception
+
+    try:
+        # 1. Decode the token using your settings
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # 2. Extract User ID ('sub' from your create_access_token function)
+        user_id_str: str = payload.get("sub")
+        
+        if user_id_str is None:
+            raise credentials_exception
+            
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token wygasł")
+    except jwt.InvalidTokenError:
+        raise credentials_exception
+
+    # 3. Fetch User from DB
+    # We load 'user_type' because the redirection logic needs to check if they are admin
+    query = (
+        select(Users)
+        .where(Users.id == int(user_id_str))
+        .options(joinedload(Users.user_type)) 
+    )
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise credentials_exception
+        
+    return user
