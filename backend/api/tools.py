@@ -12,7 +12,7 @@ from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapt
 from fastapi.responses import RedirectResponse, StreamingResponse
 from io import BytesIO
 from typing import Dict
-from pdf import create_docx
+from api.pdf import create_docx
 
 
 router = APIRouter(prefix="/api/tools", tags=["tools"])
