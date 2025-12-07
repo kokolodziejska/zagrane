@@ -65,7 +65,7 @@ export default function SideMenu() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton aria-label="User menu">
                     <User2 />
-                    <span className="ml-2">Admin</span>
+                    <span className="ml-2">Administrator</span>
                     <ChevronUp className="ml-auto" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>

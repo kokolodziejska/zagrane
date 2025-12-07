@@ -62,6 +62,17 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
+            to="/admin/terminy-budzetowania"
+            className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
+          >
+            Terminy budżetowania
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <NavLink
             to="/admin/zarzadzaj-urzytkonikami"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >

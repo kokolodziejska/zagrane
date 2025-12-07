@@ -52,13 +52,17 @@ function DialogAddComment({ open, onOpenChange, headers, rows }: DialogAddCommen
           justify-center items-center
         "
       >
+        <div className="
+         
+          justify-center items-center
+        ">
         <DialogHeader>
           <DialogTitle>Wygeneruj plik PDF z uwagami</DialogTitle>
           <DialogDescription>
             Wybierz dzień, sprawdź wybrane pozycje i dopisz komentarz.
           </DialogDescription>
         </DialogHeader>
-
+</div>
         <div className="space-y-4">
           <DatePicker value={pickedDate} onChange={setPickedDate} />
 

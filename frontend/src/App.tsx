@@ -8,6 +8,7 @@ import MangeUserPage from './pages/admin/dashboard/MangeUserPage';
 import LimitBudgetPage from './pages/admin/dashboard/LimitBudgetPage';
 import MangeBudgetPage from './pages/admin/dashboard/MangeBudgetPage';
 import AddComentsPage from './pages/admin/dashboard/AddComentsPage';
+import DepartmentSetDate from './components/admin/menu pages/DepartmentSetDate';
 
 function App() {
   return (
@@ -20,7 +21,12 @@ function App() {
             <Route index element={<DashBoard />} />
             <Route path="zarzadzaj-urzytkonikami" element={<MangeUserPage />} />
             <Route path="limity-budzetu" element={<LimitBudgetPage />} />
+<<<<<<< Updated upstream
             <Route path="zarzadzaj-budzetem" element={<MangeBudgetPage />} />
+=======
+            <Route path="terminy-budzetowania" element={<DepartmentSetDate />} />
+            <Route path="zarzadzaj-budrzetem" element={<MangeBudgetPage />} />
+>>>>>>> Stashed changes
             <Route path="uwagi-do-budżetu" element={<AddComentsPage />} />
           </Route>
         </Routes>
