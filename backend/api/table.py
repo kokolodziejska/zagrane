@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from api.schemas import TableFullDTO
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -163,6 +164,28 @@ async def get_department_from_table(table_id: int, department_id: int, db: Async
     table = result.scalars().first()
     dto = TableFullDTO.model_validate(table)
     return dto
+
+@router.get("/{table_id}/departments/{department_id}/endDate")
+async def get_department_end_date(
+    table_id: int, 
+    department_id: int, 
+    db: AsyncSession = Depends(get_db)
+) -> datetime:
+    stmt = (
+        select(DepartmentTables.end)
+        .where(
+            DepartmentTables.table_id == table_id,
+            DepartmentTables.department_id == department_id
+        )
+    )
+    
+    result = await db.execute(stmt)
+    end_date = result.scalar_one_or_none()
+
+    if end_date is None:
+        raise HTTPException(status_code=404, detail="Department entry not found")
+
+    return end_date
 
 @router.get("/{table_id}/generate_spreadsheet")
 async def get_excel(table_id: int):
