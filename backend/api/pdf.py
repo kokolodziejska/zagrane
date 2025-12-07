@@ -2,7 +2,6 @@ from docx import Document
 from datetime import date
 from io import BytesIO
 
-
 def create_docx(data, comment, date):
     doc = Document()
     doc.add_paragraph(f'Proszę edytować do: date')
