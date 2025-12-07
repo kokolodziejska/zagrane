@@ -4,16 +4,15 @@ import json
 
 class RowDataMapper:
 
-    # Updated keys to reflect that we are mapping VALUES (strings), not IDs yet
     VALUE_FIELD_MAP = {
         "budget_part": 0,
-        "division_value": 1,           # Was division_id
-        "chapter_value": 2,            # Was chapter_id
-        "paragraph_value": 3,          # Was paragraph_id
+        "division_value": 1,          
+        "chapter_value": 2,            
+        "paragraph_value": 3,          
         "funding_source": 4,
-        "expense_group_value": 5,      # Was expense_group_id
-        "task_budget_full_value": 6,   # Was task_budget_full_id
-        "task_budget_function_value": 7, # Was task_budget_function_id
+        "expense_group_value": 5,      
+        "task_budget_full_value": 6,   
+        "task_budget_function_value": 7, 
         "program_project_name": 8,
         "organizational_unit_name": 9,
         "plan_wi": 10,
@@ -50,7 +49,6 @@ class RowDataMapper:
 
     @staticmethod
     def _to_float(value: str) -> float:
-        """Converts a string to a float, treating empty/null-like strings as 0.0."""
         if not value or value.strip().lower() in ["", "nie dotyczy", "-", "draft"]:
             return 0.0
         try:
@@ -60,7 +58,6 @@ class RowDataMapper:
 
     @staticmethod
     def _to_jsonb(value: str) -> Optional[Dict]:
-        """Converts a string to a JSONB-compatible object (dict)."""
         if not value:
             return None 
         try:
