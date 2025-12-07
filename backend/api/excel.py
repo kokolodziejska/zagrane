@@ -40,7 +40,7 @@ def dto_to_rows(dto):
                     HEADERS[9]: row_data.organizational_unit_name,
                     HEADERS[10]: row_data.plan_wi,
                     HEADERS[11]: row_data.fund_distributor,
-                    HEADERS[12]: row_data.budget_amount,
+                    HEADERS[12]: row_data.budget_code,
                     HEADERS[13]: row_data.task_name,
                     HEADERS[14]: row_data.task_justification,
                     HEADERS[15]: row_data.expenditure_purpose,
