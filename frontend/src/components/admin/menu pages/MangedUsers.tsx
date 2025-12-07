@@ -4,6 +4,7 @@ import { Formik, Field, Form } from 'formik';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import SelectReservationVariantPayment from '../SelectUserType';
 
 import {
   Table,
@@ -56,7 +57,10 @@ function MangeUser() {
       .min(3, 'Nazwisko użytkownika musi mieć przynajmniej 3 znaki')
       .max(40, 'Nazwisko użytkownika może mieć maksymalnie 15 znaków'),
     department_id: yup.string().trim().required('Podaj dział'),
-    user_type_id: yup.string().trim().required('Podaj typ'),
+    user_type: yup
+  .string()
+  .oneOf(['admin', 'user'], 'Wybierz admin lub user')
+  .required('Wybierz typ użytkownika'),
   });
 
   // pobranie użytkowników z backendu
@@ -249,16 +253,8 @@ function MangeUser() {
                     <Field name="user_type_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="user_type_id">Typ użytkownika</Label>
-                          <Input
-                            id="user_type_id"
-                            type="string"
-                            placeholder="admin"
-                            {...field}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            }}
-                          />
+                          <Label htmlFor="user_type">Typ użytkownika</Label>
+                          <SelectReservationVariantPayment name="user_type" />
                           <p
                             className={`text-xs text-center ${
                               meta.touched && meta.error ? 'text-red-500' : 'invisible'
@@ -306,52 +302,52 @@ function MangeUser() {
           <div className="overflow-x-auto overflow-y-auto max-h-[35vh]">
             <Table className="min-w-max w-full">
               <TableHeader className="bg-gray-100 sticky top-0 z-10">
-  <TableRow>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      ID
-    </TableHead>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      Nazwa użytkownika
-    </TableHead>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      Imię
-    </TableHead>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      Nazwisko
-    </TableHead>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      Dział
-    </TableHead>
-    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-      Typ użytkownika
-    </TableHead>
-  </TableRow>
-</TableHeader>
+                <TableRow>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    ID
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Nazwa użytkownika
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Imię
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Nazwisko
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Dział
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Typ użytkownika
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-             <TableBody>
-  {users.map((user) => (
-    <TableRow key={user.id} className="hover:bg-gray-50">
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.id}
-      </TableCell>
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.username}
-      </TableCell>
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.name}
-      </TableCell>
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.surname}
-      </TableCell>
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.department}
-      </TableCell>
-      <TableCell className="px-2 py-2 text-left border-x border-y">
-        {user.user_type}
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-gray-50">
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.id}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.username}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.name}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.surname}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.department}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.user_type}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
 
             </Table>
           </div>
