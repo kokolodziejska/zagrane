@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import SelectReservationVariantPayment from '../SelectUserType';
+import SelectDepartment from '../SelectDep';
 
 import {
   Table,
@@ -56,7 +57,7 @@ function MangeUser() {
       .required('Podaj nazwisko użytkownika')
       .min(3, 'Nazwisko użytkownika musi mieć przynajmniej 3 znaki')
       .max(40, 'Nazwisko użytkownika może mieć maksymalnie 15 znaków'),
-    department_id: yup.string().trim().required('Podaj dział'),
+    department: yup.string().required('Wybierz dział'),
     user_type: yup
   .string()
   .oneOf(['admin', 'user'], 'Wybierz admin lub user')
@@ -226,16 +227,8 @@ function MangeUser() {
                     <Field name="department_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="department_id">Dział</Label>
-                          <Input
-                            id="department_id"
-                            type="string"
-                            placeholder="min cyf"
-                            {...field}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            }}
-                          />
+                          <Label htmlFor="department">Dział</Label>
+                          <SelectDepartment name="department" />
                           <p
                             className={`text-xs text-center ${
                               meta.touched && meta.error ? 'text-red-500' : 'invisible'
