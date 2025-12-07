@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import uvicorn
 
-
 from db.init_db import init_db
 from api.user import router as user_router
 from api.table import router as table_router
