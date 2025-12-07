@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 import enum
 from datetime import time, date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,6 +7,7 @@ from sqlalchemy import Enum, String, Integer, SmallInteger, Time, Date, Numeric,
 from .database import Base
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import text
+from sqlalchemy import DateTime
 
 class UserRole(str, enum.Enum):
     user = "user"
@@ -59,8 +61,8 @@ class DepartmentTables(Base):
     table_id: Mapped[int] = mapped_column(ForeignKey("tables.id"), nullable=False)
     department_id: Mapped[int] = mapped_column(ForeignKey("departments.id"), nullable=False)
     status_id: Mapped[int] = mapped_column(ForeignKey("statuses.id"), nullable=False)
-    start: Mapped[time] = mapped_column(Time, nullable=False)
-    end: Mapped[time] = mapped_column(Time, nullable=False)
+    start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     table: Mapped["Tables"] = relationship("Tables", backref="department_tables")
     department: Mapped["Departments"] = relationship("Departments", backref="department_tables")
@@ -70,7 +72,7 @@ class Rows(Base):
     __tablename__ = "rows"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     department_table_id: Mapped[int] = mapped_column(ForeignKey("department_tables.id"), nullable=False)
-    last_update: Mapped[time] = mapped_column(Time, nullable=False)
+    last_update: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     next_year: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     department_table: Mapped["DepartmentTables"] = relationship("DepartmentTables", backref="rows")
@@ -115,7 +117,7 @@ class RowDatas(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     row_id: Mapped[int] = mapped_column(ForeignKey("rows.id"), nullable=False)
     last_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    last_update: Mapped[time] = mapped_column(Time, nullable=False)
+    last_update: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     budget_part: Mapped[str] = mapped_column(String(2), nullable=False)
     division_id: Mapped[int] = mapped_column(ForeignKey("divisions.id"), nullable=False)
