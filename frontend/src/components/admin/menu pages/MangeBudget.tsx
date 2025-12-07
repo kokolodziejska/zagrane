@@ -148,6 +148,9 @@ function MangeBudget() {
         colIndex: number;
     } | null>(null);
 
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [rowToDelete, setRowToDelete] = useState<EnrichedRow | null>(null);
+
     const handleCellChange = (targetRow: EnrichedRow, colIndex: number, newValue: string) => {
         setTableRows(prev =>
             prev.map(r => {
@@ -159,6 +162,36 @@ function MangeBudget() {
                 return r;
             })
         );
+    };
+
+    const handleAskDeleteRow = (targetRow: EnrichedRow) => {
+        setRowToDelete(targetRow);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!rowToDelete) return;
+        setTableRows(prev => prev.filter(r => r !== rowToDelete));
+        setRowToDelete(null);
+        setDeleteModalOpen(false);
+    };
+
+    const handleCancelDelete = () => {
+        setRowToDelete(null);
+        setDeleteModalOpen(false);
+    };
+
+    const handleAddRow = () => {
+        if (!headers) return;
+        const emptyValues: RowValues = Array(headers.length).fill('');
+        const newRow: EnrichedRow = {
+            rowId: null,
+            versionDate: null,
+            lastUserId: null,
+            lastUpdate: null,
+            values: emptyValues,
+        };
+        setTableRows(prev => [...prev, newRow]);
     };
 
     const formatLastUpdate = (iso: string | null): string => {
@@ -189,7 +222,19 @@ function MangeBudget() {
     }, []);
 
     if (loading || !headers) return <div>Ładowanie danych...</div>;
-    if (tableRows.length === 0) return <div>Brak danych</div>;
+    if (tableRows.length === 0) return (
+        <div>
+            Brak danych
+            <div className="mt-4">
+                <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 text-xl"
+                    onClick={handleAddRow}
+                >
+                    +
+                </Button>
+            </div>
+        </div>
+    );
 
     const displayRows: DisplayRow[] = (() => {
         const groups = new Map<string, EnrichedRow[]>();
@@ -247,7 +292,10 @@ function MangeBudget() {
                 <Table className="min-w-max w-full">
                     <TableHeader className="bg-gray-100 sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="w-8 px-1 py-2 border-x border-y whitespace-normal break-words"></TableHead>
+                            {/* H */}
+                            <TableHead className="w-8 px-1 py-2 border-x border-y whitespace-normal break-words" />
+                            {/* - */}
+                            <TableHead className="w-8 px-1 py-2 border-x border-y whitespace-normal break-words" />
                             {headers.map((h, i) => (
                                 <TableHead
                                     key={i}
@@ -265,6 +313,7 @@ function MangeBudget() {
                                 key={rowIndex}
                                 className="hover:bg-gray-50"
                             >
+                                {/* HISTORY "H" BUTTON – TERAZ PIERWSZA KOLUMNA */}
                                 <TableCell className="px-1 py-1 text-center border-x border-y align-middle whitespace-normal break-words">
                                     {history.length > 0 && (
                                         <button
@@ -277,6 +326,19 @@ function MangeBudget() {
                                         </button>
                                     )}
                                 </TableCell>
+
+                                {/* DELETE "-" BUTTON – TERAZ DRUGA KOLUMNA */}
+                                <TableCell className="px-1 py-1 text-center border-x border-y align-middle whitespace-normal break-words">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleAskDeleteRow(row)}
+                                        className="h-6 w-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center hover:bg-red-700"
+                                        aria-label="Usuń wiersz"
+                                    >
+                                        -
+                                    </button>
+                                </TableCell>
+
                                 {row.values.map((v, colIndex) => {
                                     const isEditing =
                                         editingCell &&
@@ -324,6 +386,17 @@ function MangeBudget() {
                 </Table>
             </div>
 
+            {/* PRZYCISK DODAWANIA WIERSZA NA DOLE */}
+            <div className="max-w-[80vw] mt-4 flex justify-start">
+                <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 text-xl"
+                    onClick={handleAddRow}
+                >
+                    +
+                </Button>
+            </div>
+
+            {/* POPUP HISTORII */}
             {historyModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                     <div className="bg-white rounded-lg shadow-lg max-w-[95vw] max-h-[85vh] w-[90vw] p-6 flex flex-col">
@@ -378,6 +451,33 @@ function MangeBudget() {
                                     ))}
                                 </TableBody>
                             </Table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* POPUP USUWANIA WIERSZA */}
+            {deleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-lg w-[400px] max-w-[90vw] p-6">
+                        <h2 className="text-lg font-semibold mb-4">
+                            Czy na pewno chcesz usunąć ten wiersz?
+                        </h2>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCancelDelete}
+                                className="px-4 py-2 text-sm rounded-md bg-gray-200 hover:bg-gray-300"
+                            >
+                                Anuluj
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDelete}
+                                className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700"
+                            >
+                                Usuń
+                            </button>
                         </div>
                     </div>
                 </div>
