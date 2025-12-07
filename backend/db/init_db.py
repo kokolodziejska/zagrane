@@ -336,10 +336,14 @@ async def seed_like_a_boss(session):
         session.add(u_type)
         dept = Departments(type="Departament B")
         session.add(dept)
-        task_full = Tasks(value="22.1.1.1", type="action", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
+        task_full = Tasks(value="22.01.01.01", type="action", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
         session.add(task_full)
-        task = Tasks(value="22.1", type="task", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
+        task = Tasks(value="22.01", type="task", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
         session.add(task)
+        task_full2 = Tasks(value="21.12.01.01", type="action", description="Inna Koordynacja działalności oraz obsługa administracyjna i techniczna")
+        session.add(task_full2)
+        task12 = Tasks(value="21.12", type="task", description="Inna Koordynacja działalności oraz obsługa administracyjna i techniczna")
+        session.add(task12)
         stat = Statuses(value="Active")
         session.add(stat)
         exp_group = ExpenseGroups(definition="wydatki bieżące jednostek budżetowych")
@@ -347,9 +351,8 @@ async def seed_like_a_boss(session):
         div = Divisions(value="751")
         session.add(div)
 
-        table = Tables(year=this_year, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))
-        session.add(table)
-        
+        table = (await session.execute(select(Tables))).scalars().first()
+
         hashed_pw = argon2.hash("123") 
         auth = Authentication(password=hashed_pw) 
         session.add(auth)
@@ -404,7 +407,7 @@ async def seed_like_a_boss(session):
             row_id=row_1.id,
             last_user_id=user.id,
             last_update=datetime.now(),
-            budget_part="33",
+            budget_part="1",
             division_id=div.id,
             chapter_id=chapter.id,
             paragraph_id=paragraph.id,
