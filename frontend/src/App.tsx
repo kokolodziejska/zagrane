@@ -22,7 +22,7 @@ function App() {
             <Route path="zarzadzaj-urzytkonikami" element={<MangeUserPage />} />
             <Route path="limity-budzetu" element={<LimitBudgetPage />} />
             <Route path="terminy-budzetowania" element={<DepartmentSetDate />} />
-            <Route path="zarzadzaj-budrzetem" element={<MangeBudgetPage />} />
+            <Route path="zarzadzaj-budzetem" element={<MangeBudgetPage />} />
             <Route path="uwagi-do-budżetu" element={<AddComentsPage />} />
           </Route>
         </Routes>
