@@ -91,7 +91,8 @@ const extractRowData = (data: Row): RowValues[] => {
       getVal(r, 'financial_needs_0'),
       getVal(r, 'expenditure_limit_0'),
       getVal(r, 'unallocated_task_funds_0'),
-      getVal(r, 'contract_amount_0'),
+      getVal(r
+        , 'contract_amount_0'),
       getVal(r, 'contract_number_0'),
       getVal(r, 'financial_needs_1'),
       getVal(r, 'expenditure_limit_1'),
