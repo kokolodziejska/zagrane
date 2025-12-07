@@ -135,13 +135,6 @@ async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     db_user_type = res_type.scalars().first()
 
     if not db_user_type:
-        # fallback
-        res_type_fallback = await db.execute(
-            select(UserTypes).where(UserTypes.type.in_(["user", "employee"]))
-        )
-        db_user_type = res_type_fallback.scalars().first()
-
-    if not db_user_type:
         raise HTTPException(status_code=400, detail="Niepoprawny typ użytkownika")
 
     # 4. Resolve Department
