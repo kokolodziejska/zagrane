@@ -2,11 +2,8 @@ import os
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-<<<<<<< Updated upstream
-# DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/reservation"
-=======
->>>>>>> Stashed changes
-DATABASE_URL = os.getenv( "DATABASE_URL")
+# DATABASE_URL = os.getenv( "DATABASE_URL")
+DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/reservation"
 
 engine = create_async_engine( 
     DATABASE_URL,
