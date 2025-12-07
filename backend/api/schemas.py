@@ -61,7 +61,7 @@ class RowDataDTO(BaseModel):
     plan_wi: Optional[str] = None
     fund_distributor: Optional[str] = None
     
-    budget_amount: Decimal
+    budget_code: str
     
     task_name: Optional[str] = None
     task_justification: Optional[str] = None
