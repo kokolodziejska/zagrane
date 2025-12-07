@@ -40,6 +40,7 @@ async def update_expenditure_limits(req: DeptLimitUpdateRequest, db: AsyncSessio
                 for rd in row_datas:
                     print(3)
                     rd.expenditure_limit_0 = Decimal(new_limit)
+                    print(new_limit)
                     db.add(rd)
                     await db.flush()        # ensure SQL is executed
                     await db.refresh(rd) 
