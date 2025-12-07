@@ -11,6 +11,7 @@ import {
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import DialogAddComment from './DialogAddComent';
 
 
 
@@ -93,6 +94,8 @@ async function get_table_headers() {
 function AddComents() {
   const [headers, setHeaders] = useState<string[] | null>(null);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -127,7 +130,7 @@ function AddComents() {
     <div>
   
      <div className="flex flex-col justify-end items-end w-[75vw]">
-        <Button variant="default" className="h-[3.5vh] w-[7vw]">
+        <Button variant="default" className="h-[3.5vh] w-[7vw]" onClick={() => setDialogOpen(true)}>
             Wygneruj Pdf
         </Button>
       </div>
@@ -176,6 +179,9 @@ function AddComents() {
         </TableBody>
       </Table>
     </div>
+     {dialogOpen && (
+        <DialogAddComment open={dialogOpen} onOpenChange={setDialogOpen} />
+      )}
     </div>
   );
 }
