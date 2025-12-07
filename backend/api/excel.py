@@ -24,9 +24,9 @@ async with AsyncSessionLocal() as db:
 def dto_to_rows(dto):
     rows = []
     for dept_table in dto.department_tables:
+        rows.append({HEADERS[i]: i for i in range(len(HEADERS))})
         for row in dept_table.rows:
-            rows.append({HEADERS[i]: i for i in range(len(HEADERS))})
-            for row_data in row.row_datas:
+            for row_data in row.row_datas[::-1]:
                 rows.append({
                     HEADERS[0]: row_data.budget_part,
                     HEADERS[1]: row_data.division.value,
@@ -73,6 +73,7 @@ def dto_to_rows(dto):
                     HEADERS[37]: row_data.legal_basis_for_subsidy,
                     HEADERS[38]: row_data.notes,
                 })
+                break
             rows.append({HEADERS[i]: None for i in range(len(HEADERS))})
     return rows
 
