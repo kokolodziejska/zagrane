@@ -9,4 +9,5 @@ passlib[argon2]>=1.7
 PyJWT>=2.8
 uvicorn
 pandas
+openpyxl
 python-docx

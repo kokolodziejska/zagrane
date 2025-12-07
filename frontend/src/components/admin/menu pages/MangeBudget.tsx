@@ -537,29 +537,46 @@ function MangeBudget() {
         fetchAll();
     }, []);
 
-    // global walidacja – jeśli jakakolwiek komórka jest niepoprawna,
-    // przycisk "Zapisz zmiany" będzie zablokowany
-    const hasInvalidCells = tableRows.some(row =>
-        row.values.some((v, colIndex) => !validateCellValue(colIndex, v))
-    );
+    const handleGenerateExcel = async () => {
+        const mainTableId = 1;
 
-    const handleGenerateExcel = () => {
-        // bierzemy główne ID tabeli – albo z pierwszego wiersza, albo fallback na stałą
-        const mainTableId =
-            tableRows.length > 0 ? tableRows[0].tableId : TABLE_ID;
+        try {
+            const res = await fetch(
+                `http://localhost:8000/api/tables/${mainTableId}/generate_spreadsheet`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
 
-        const url = `http://localhost:8000/api/tables/${mainTableId}/generate_spreadsheet`;
+            if (!res.ok) {
+                console.error(
+                    'Błąd generowania Excela',
+                    res.status,
+                    await res.text()
+                );
+                return;
+            }
 
-        // najprostsze podejście – przeglądarka sama obsłuży pobranie
-        window.open(url, '_blank');
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tabela_${mainTableId}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('Błąd podczas pobierania Excela', e);
+        }
     };
 
-
     const handleSaveChanges = async () => {
-        // możesz zostawić loga do debugowania
         console.log('Kliknięto Zapisz zmiany', changedRows);
 
-        // budujemy dokładnie taki payload, jak w przykładzie
         const payload = changedRows.map(cr => ({
             tableId: cr.tableId,
             departmentTableId: cr.departmentTableId,
@@ -585,7 +602,6 @@ function MangeBudget() {
                 return;
             }
 
-            // po wysłaniu czyścimy tabelę zmian
             setChangedRows([]);
             console.log('Zapis zmian OK');
         } catch (e) {
@@ -668,8 +684,11 @@ function MangeBudget() {
                     >
                         Zapisz zmiany
                     </Button>
-                    <Button className="h-[3.5vh] w-[7vw]">
-                        Wygneruj Excel
+                    <Button
+                        className="h-[3.5vh] w-[7vw]"
+                        onClick={handleGenerateExcel}
+                    >
+                        Wygeneruj Excel
                     </Button>
                 </div>
             </div>
