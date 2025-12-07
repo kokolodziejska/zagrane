@@ -61,7 +61,7 @@ class RowDataDTO(BaseModel):
     plan_wi: Optional[str] = None
     fund_distributor: Optional[str] = None
     
-    budget_amount: Decimal
+    budget_code: str
     
     task_name: Optional[str] = None
     task_justification: Optional[str] = None
@@ -131,3 +131,50 @@ class TableFullDTO(BaseModel):
     department_tables: List[DepartmentTableDTO] = []
     model_config = ConfigDict(from_attributes=True)
 
+HEADERS = [
+    "Część budżetowa",
+    "Dział",
+    "Rozdział",
+    "Paragraf",
+    "Źródło finansowania",
+    "Grupa wydatków",
+    "Budżet zadaniowy (w pełnej szczegółowości)",
+    "Budżet zadaniowy (nr funkcji, nr zadania)",
+    "Nazwa programu/projektu",
+
+    "Nazwa komórki organizacyjnej",
+    "Plan WI",
+    "Dysponent środków",
+    "Budżet",
+    "Nazwa zadania",
+    "Szczegółowe uzasadnienie realizacji zadania",
+    "Przeznaczenie wydatków wg obszaru działalności: cyberbezpieczeństwo/sztuczna inteligencja/koszty funkcjonowania/inne (wpisać jakie?)",
+    
+    "Potrzeby finansowe na rok 2026",
+    "Limit wydatków na rok 2026",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie\n(kol. 17-kol. 18)",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    
+    "Potrzeby finansowe na rok 2027",
+    "Limit wydatków na rok 2027",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie\n(kol. 22-kol. 23)",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+
+    "Potrzeby finansowe na rok 2028",
+    "Limit wydatków na rok 2028",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie\n(kol. 27-kol. 28)",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+
+    "Potrzeby finansowe na rok 2029",
+    "Limit wydatków na rok 2029",
+    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie\n(kol. 32-kol. 33)",
+    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
+    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
+    
+    "W przypadku dotacji - z kim zawarta umowa/planowana do zawarcia umowa",    
+    "Podstawa prawna udzielenia dotacji",
+    "Uwagi",
+]
