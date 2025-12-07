@@ -16,19 +16,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-  type User = {
+type User = {
   id: number;
   username: string;
   name: string;
   surname: string;
-  department: string;   
-  user_type: string;    
+  department: string;
+  user_type: string;
 };
 
 function MangeUser() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // błąd listy
+  const [submitError, setSubmitError] = useState<string | null>(null); // błąd dodawania
 
   const validationSchema = yup.object({
     userName: yup
@@ -50,7 +51,10 @@ function MangeUser() {
       .matches(/[A-Z]/, 'Hasło musi posiadac przynajmniej jedną wielką literę')
       .matches(/[a-z]/, 'Hasło musi posiadac przynajmniej jedną mała literę')
       .matches(/\d/, 'Hasło musi posiadac przynajmniej jedną cyfrę')
-      .matches(/[!@#$%^&*(),.?\":{}|<>]/, 'Hasło musi posiadac przynajmniej jeden znak specjalny'),
+      .matches(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        'Hasło musi posiadac przynajmniej jeden znak specjalny'
+      ),
     surname: yup
       .string()
       .trim()
@@ -59,9 +63,9 @@ function MangeUser() {
       .max(40, 'Nazwisko użytkownika może mieć maksymalnie 15 znaków'),
     department: yup.string().required('Wybierz dział'),
     user_type: yup
-  .string()
-  .oneOf(['admin', 'user'], 'Wybierz admin lub user')
-  .required('Wybierz typ użytkownika'),
+      .string()
+      .oneOf(['admin', 'user'], 'Wybierz admin lub user')
+      .required('Wybierz typ użytkownika'),
   });
 
   // pobranie użytkowników z backendu
@@ -96,7 +100,7 @@ function MangeUser() {
           borderColor: 'var(--primary)',
         }}
       >
-        <h2 className="text-xl font-bold"> Dodaj nowego użytkonika</h2>
+        <h2 className="text-xl font-bold">Dodaj nowego użytkownika</h2>
         <Formik
           enableReinitialize
           validationSchema={validationSchema}
@@ -104,40 +108,76 @@ function MangeUser() {
             userName: '',
             name: '',
             surname: '',
-            passord: '',
-            department_id: '',
-            user_type_id: '',
+            password: '',
+            department: '',
+            user_type: '',
           }}
           validateOnChange={false}
-          onSubmit={(values) => {
-            // TODO: wywołaj endpoint do dodawania użytkownika,
-            // a po sukcesie ponownie pobierz listę użytkowników
+          onSubmit={async (values, { resetForm }) => {
+            try {
+              setSubmitError(null);
+
+              const payload = {
+                username: values.userName,
+                name: values.name,
+                surname: values.surname,
+                password: values.password,
+                department: values.department,
+                user_type: values.user_type,
+              };
+
+              const res = await fetch('/api/user/register', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+              });
+
+              if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+              }
+
+              const createdUser = (await res.json()) as User;
+
+              // dopisz nowego użytkownika do istniejącej listy
+              setUsers((prev) => [...prev, createdUser]);
+
+              resetForm();
+            } catch (err) {
+              console.error('Error registering user:', err);
+              setSubmitError('Nie udało się dodać użytkownika.');
+            }
           }}
         >
-          {({ resetForm }) => (
+          {() => (
             <div className="container flex flex-col items-center w-[80vw] gap-[2vh]">
               <Form>
                 <div className="grid grid-cols-3 grid-rows-2 gap-[1vw] h-[25vh] w-[65vw]">
+                  {/* Nazwa użytkownika */}
                   <div className="grid gap-3 ">
                     <Field name="userName">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="userName">Nazwa użytkonika</Label>
+                          <Label htmlFor="userName">Nazwa użytkownika</Label>
                           <Input
                             id="userName"
-                            type="string"
+                            type="text"
                             placeholder="jan.kowalski"
                             {...field}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Enter')
+                                (e.target as HTMLInputElement).blur();
                             }}
                           />
                           <p
                             className={`text-xs text-center ${
-                              meta.touched && meta.error ? 'text-red-500' : 'invisible'
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
                             }`}
                             aria-live="polite"
-                            id="userName"
+                            id="userName-error"
                           >
                             {meta.error || 'placeholder'}
                           </p>
@@ -145,6 +185,8 @@ function MangeUser() {
                       )}
                     </Field>
                   </div>
+
+                  {/* Imię */}
                   <div className="grid gap-3 ">
                     <Field name="name">
                       {({ field, meta }: any) => (
@@ -152,19 +194,22 @@ function MangeUser() {
                           <Label htmlFor="name">Imię</Label>
                           <Input
                             id="name"
-                            type="string"
+                            type="text"
                             placeholder="Jan"
                             {...field}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Enter')
+                                (e.target as HTMLInputElement).blur();
                             }}
                           />
                           <p
                             className={`text-xs text-center ${
-                              meta.touched && meta.error ? 'text-red-500' : 'invisible'
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
                             }`}
                             aria-live="polite"
-                            id="name"
+                            id="name-error"
                           >
                             {meta.error || 'placeholder'}
                           </p>
@@ -172,6 +217,8 @@ function MangeUser() {
                       )}
                     </Field>
                   </div>
+
+                  {/* Nazwisko */}
                   <div className="grid gap-3 ">
                     <Field name="surname">
                       {({ field, meta }: any) => (
@@ -179,19 +226,22 @@ function MangeUser() {
                           <Label htmlFor="surname">Nazwisko</Label>
                           <Input
                             id="surname"
-                            type="string"
+                            type="text"
                             placeholder="Kowalski"
                             {...field}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Enter')
+                                (e.target as HTMLInputElement).blur();
                             }}
                           />
                           <p
                             className={`text-xs text-center ${
-                              meta.touched && meta.error ? 'text-red-500' : 'invisible'
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
                             }`}
                             aria-live="polite"
-                            id="surname"
+                            id="surname-error"
                           >
                             {meta.error || 'placeholder'}
                           </p>
@@ -199,42 +249,53 @@ function MangeUser() {
                       )}
                     </Field>
                   </div>
-                   <div className="grid gap-3">
-                <Field name="password">
-                  {({ field, meta }: any) => (
-                    <div className="grid gap-2">
-                      <Label htmlFor="password">Podaj hasło</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        {...field}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                        }}
-                      />
-                      <p
-                        className={`text-xs text-center ${meta.touched && meta.error ? 'text-red-500' : 'invisible'}`}
-                        aria-live="polite"
-                        id="email-error"
-                      >
-                        {meta.error || 'placeholder'}
-                      </p>
-                    </div>
-                  )}
-                </Field>
-              </div>
-                  <div className="grid gap-3 ">
-                    <Field name="department_id">
+
+                  {/* Hasło */}
+                  <div className="grid gap-3">
+                    <Field name="password">
                       {({ field, meta }: any) => (
+                        <div className="grid gap-2">
+                          <Label htmlFor="password">Podaj hasło</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            {...field}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter')
+                                (e.target as HTMLInputElement).blur();
+                            }}
+                          />
+                          <p
+                            className={`text-xs text-center ${
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
+                            }`}
+                            aria-live="polite"
+                            id="password-error"
+                          >
+                            {meta.error || 'placeholder'}
+                          </p>
+                        </div>
+                      )}
+                    </Field>
+                  </div>
+
+                  {/* Dział */}
+                  <div className="grid gap-3 ">
+                    <Field name="department">
+                      {({ meta }: any) => (
                         <div className="grid gap-2">
                           <Label htmlFor="department">Dział</Label>
                           <SelectDepartment name="department" />
                           <p
                             className={`text-xs text-center ${
-                              meta.touched && meta.error ? 'text-red-500' : 'invisible'
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
                             }`}
                             aria-live="polite"
-                            id="department_id"
+                            id="department-error"
                           >
                             {meta.error || 'placeholder'}
                           </p>
@@ -242,18 +303,22 @@ function MangeUser() {
                       )}
                     </Field>
                   </div>
+
+                  {/* Typ użytkownika */}
                   <div className="grid gap-3 ">
-                    <Field name="user_type_id">
-                      {({ field, meta }: any) => (
+                    <Field name="user_type">
+                      {({ meta }: any) => (
                         <div className="grid gap-2">
                           <Label htmlFor="user_type">Typ użytkownika</Label>
                           <SelectReservationVariantPayment name="user_type" />
                           <p
                             className={`text-xs text-center ${
-                              meta.touched && meta.error ? 'text-red-500' : 'invisible'
+                              meta.touched && meta.error
+                                ? 'text-red-500'
+                                : 'invisible'
                             }`}
                             aria-live="polite"
-                            id="user_type_id"
+                            id="user_type-error"
                           >
                             {meta.error || 'placeholder'}
                           </p>
@@ -262,10 +327,16 @@ function MangeUser() {
                     </Field>
                   </div>
                 </div>
+
                 <div className="pt-2">
                   <Button type="submit" className="w-full">
-                    Dodaj użytkonika
+                    Dodaj użytkownika
                   </Button>
+                  {submitError && (
+                    <p className="mt-2 text-sm text-red-500 text-center">
+                      {submitError}
+                    </p>
+                  )}
                 </div>
               </Form>
             </div>
@@ -274,10 +345,7 @@ function MangeUser() {
       </div>
 
       {/* TABELA Z UŻYTKOWNIKAMI Z NOWEGO ENDPOINTU */}
-      <div
-        className="container flex flex-col w-[80vw] max-h-[45vh]  rounded-lg p-4"
-        
-      >
+      <div className="container flex flex-col w-[80vw] max-h-[45vh] rounded-lg p-4">
         <h2 className="text-xl font-bold mb-4">Lista użytkowników</h2>
 
         {loading && <p>Wczytywanie użytkowników...</p>}
@@ -341,7 +409,6 @@ function MangeUser() {
                   </TableRow>
                 ))}
               </TableBody>
-
             </Table>
           </div>
         )}

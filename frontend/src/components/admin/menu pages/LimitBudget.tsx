@@ -16,7 +16,9 @@ const tab = {
   headers: ['Dział', 'Potrzebny Budżet (zł)', 'Przydziel Budżet (zł)', 'Różnica'],
 };
 
+// ---------- ENDPOINTY POMOCNICZE ----------
 
+// potrzeby działów
 async function getNeedsPerDepartment() {
   try {
     const res = await fetch('/api/tables/1/get_needs_per_department');
@@ -30,6 +32,7 @@ async function getNeedsPerDepartment() {
   }
 }
 
+// limity działów (3 kolumna)
 async function getLimitsPerDepartment() {
   try {
     const res = await fetch('/api/tables/1/get_limits_per_department');
@@ -43,13 +46,13 @@ async function getLimitsPerDepartment() {
   }
 }
 
+// globalny budżet
 async function getTotalBudget() {
   try {
     const res = await fetch('/api/tables/1/get_total_budget');
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    // np. 1000000
     return await res.json(); // liczba
   } catch (err) {
     console.error('Error fetching total budget:', err);
@@ -57,58 +60,111 @@ async function getTotalBudget() {
   }
 }
 
+// aktualizacja globalnego budżetu
+async function updateTotalBudget(budget: number) {
+  try {
+    const res = await fetch('/api/tables/1/update_budget', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ budget }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error('Error updating total budget:', err);
+    throw err;
+  }
+}
+
+// *** NOWE *** – aktualizacja limitów wydatków dla działów
+type DepartmentUpdate = [string, number];
+
+async function updateDepartmentLimits(updates: DepartmentUpdate[]) {
+  try {
+    const res = await fetch('/api/departments/update_expenditure_limits', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ updates }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error('Error updating department expenditure limits:', err);
+    throw err;
+  }
+}
+
+// ---------- TYPY ----------
+
 type DepartmentRow = {
-  name: string;   // nazwa działu (klucz z JSON)
-  needed: number; // potrzebny budżet (wartość z JSON)
+  name: string;   // nazwa działu
+  needed: number; // potrzebny budżet
 };
+
+// ---------- KOMPONENT ----------
 
 function LimitBudget() {
   const [budgetLimit, setBudgetLimit] = useState('');
-  const [assignedBudget, setAssignedBudget] = useState(''); // zostawiam, może użyjesz później
+  const [assignedBudget, setAssignedBudget] = useState(''); // zostawione na przyszłość
 
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [editedBudgets, setEditedBudgets] = useState<string[]>([]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
   useEffect(() => {
-  (async () => {
-    // 1) Pobranie potrzeb działów
-    const needsData = await getNeedsPerDepartment();
-    if (!needsData) return;
+    (async () => {
+      // 1) potrzeby działów
+      const needsData = await getNeedsPerDepartment();
+      if (!needsData) return;
 
-    const mapped: DepartmentRow[] = Object.entries(needsData).map(
-      ([name, needed]) => ({
-        name,
-        needed: Number(needed),
-      })
-    );
-
-    setDepartments(mapped);
-
-    // 2) Pobranie globalnego limitu budżetu i ustawienie pola
-    const totalBudget = await getTotalBudget();
-    if (totalBudget !== null && totalBudget !== undefined) {
-      setBudgetLimit(String(totalBudget));
-    }
-
-    // 3) Pobranie limitów per dział (3 kolumna tabeli)
-    const limitsData = await getLimitsPerDepartment();
-
-    if (limitsData) {
-      setEditedBudgets(
-        mapped.map((dep) =>
-          limitsData[dep.name] !== undefined
-            ? String(limitsData[dep.name])
-            : ''
-        )
+      const mapped: DepartmentRow[] = Object.entries(needsData).map(
+        ([name, needed]) => ({
+          name,
+          needed: Number(needed),
+        })
       );
-    } else {
-      setEditedBudgets(mapped.map(() => ''));
-    }
-  })();
-}, []);
 
+      setDepartments(mapped);
 
-  // Funkcja do obliczania różnicy
+      // 2) globalny budżet
+      const totalBudget = await getTotalBudget();
+      if (totalBudget !== null && totalBudget !== undefined) {
+        setBudgetLimit(String(totalBudget));
+      }
+
+      // 3) limity per dział
+      const limitsData = await getLimitsPerDepartment();
+
+      if (limitsData) {
+        setEditedBudgets(
+          mapped.map((dep) =>
+            limitsData[dep.name] !== undefined
+              ? String(limitsData[dep.name])
+              : ''
+          )
+        );
+      } else {
+        setEditedBudgets(mapped.map(() => ''));
+      }
+    })();
+  }, []);
+
+  // różnica
   const calculateDifference = (needed: number, assigned: number) => {
     return needed - assigned;
   };
@@ -146,9 +202,47 @@ function LimitBudget() {
   const remainingBudget = parseFloat(budgetLimit || '0') - totalAssignedBudget;
 
   const totalDifference = departments.reduce(
-    (sum, dep, index) => sum + calculateDifference(dep.needed, getAssigned(index)),
+    (sum, dep, index) =>
+      sum + calculateDifference(dep.needed, getAssigned(index)),
     0
   );
+
+  // *** TU DZIEJE SIĘ MAGIA GUZIKA ***
+  const handleSaveBudgetLimit = async () => {
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    const parsed = parseFloat(budgetLimit.replace(',', '.'));
+    if (isNaN(parsed)) {
+      setSaveError('Limit budżetu musi być liczbą.');
+      return;
+    }
+
+    // przygotuj listę [nazwa_działu, budżet]
+    const updates: DepartmentUpdate[] = departments.map((dep, idx) => {
+      const assigned = getAssigned(idx);
+      const value = isNaN(assigned) ? 0 : assigned;
+      return [dep.name, value];
+    });
+
+    try {
+      setIsSaving(true);
+
+      // 1) aktualizujemy globalny limit
+      await updateTotalBudget(parsed);
+
+      // 2) aktualizujemy limity działów
+      await updateDepartmentLimits(updates);
+
+      setSaveSuccess('Limit budżetu i limity działów zostały zaktualizowane.');
+      console.log('Budget updated to:', parsed);
+      console.log('Department limits:', updates);
+    } catch (err) {
+      setSaveError('Nie udało się zapisać zmian limitów.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -181,11 +275,23 @@ function LimitBudget() {
         </div>
         <div className="flex flex-col justify-end items-end w-[15vw]">
           <Label htmlFor="remainingBudget" className="mb-2"></Label>
-          <Button variant="default" className="h-[3.5vh] w-[7vw]">
-            Zatwierdź
+          <Button
+            variant="default"
+            className="h-[3.5vh] w-[7vw]"
+            onClick={handleSaveBudgetLimit}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Zapisywanie...' : 'Zatwierdź'}
           </Button>
         </div>
       </div>
+
+      {saveError && (
+        <p className="text-red-600 text-sm">{saveError}</p>
+      )}
+      {saveSuccess && (
+        <p className="text-green-600 text-sm">{saveSuccess}</p>
+      )}
 
       <hr className="my-6" />
 
@@ -269,7 +375,7 @@ function LimitBudget() {
                     {dep.needed}
                   </TableCell>
 
-                  {/* kolumna 3 – przydziel budżet (wartości z endpointu + edycja) */}
+                  {/* kolumna 3 – przydziel budżet (edytowalne) */}
                   <TableCell
                     className="px-4 py-2 text-center border-x border-y"
                     style={{ width: '15vw' }}

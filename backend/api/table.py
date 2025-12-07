@@ -2,6 +2,7 @@ from datetime import date, datetime
 from api.mapper import RowDataMapper
 from api.schemas import RowUpdateRequest, TableFullDTO
 from fastapi import APIRouter, Depends, HTTPException, Request
+from api.schemas import TableFullDTO, BudgetUpdateRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload, with_loader_criteria
@@ -13,8 +14,30 @@ from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapt
 from fastapi.responses import RedirectResponse, StreamingResponse
 from io import BytesIO
 from typing import List
+from dateutil import parser
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
+
+@router.put("/{table_id}/update_budget")
+async def update_table_budget(
+    table_id: int,
+    req: BudgetUpdateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Tables).where(Tables.id == table_id))
+    table = result.scalars().first()
+
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    table.budget = req.budget
+
+    db.add(table)
+    await db.commit()
+    await db.refresh(table)
+
+    return {"id": table.id, "budget": str(table.budget)}
+
 
 @router.get("/{table_id}/get_total_budget")
 async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
@@ -47,7 +70,10 @@ async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(ge
     return dto.budget
 
 @router.get("/{table_id}/get_limits_per_department")
-async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
+async def get_limits_per_department(
+    table_id: int,
+    db: AsyncSession = Depends(get_db),
+):
     query = (
         select(Tables)
         .where(Tables.id == table_id)
@@ -55,7 +81,6 @@ async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(ge
             selectinload(Tables.department_tables).options(
                 joinedload(DepartmentTables.department),
                 joinedload(DepartmentTables.status),
-                
                 selectinload(DepartmentTables.rows).options(
                     selectinload(Rows.row_datas).options(
                         joinedload(RowDatas.division),
@@ -65,28 +90,52 @@ async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(ge
                         joinedload(RowDatas.task_budget_full),
                         joinedload(RowDatas.task_budget_function),
                     )
-                )
+                ),
             )
         )
     )
 
     result = await db.execute(query)
     table = result.scalars().first()
+    if table is None:
+        return {}
+
     dto = TableFullDTO.model_validate(table)
 
-    sums_per_dept = {}
+    sums_per_dept: dict[str, float] = {}
+
     for dept_table in dto.department_tables:
-        id = dept_table.department.type
-        partial = 0
+        dept_key = dept_table.department.type  # z modelu Departments
+
+        # 1. Zgrupuj wiersze po row.id i wybierz najnowszy Row po last_update
+        latest_rows_by_id: dict[int, any] = {}
         for row in dept_table.rows:
-            for row_data in row.row_datas:
-                value = row_data.expenditure_limit_0 or 0
-                partial += int(value)
-        if id in sums_per_dept:
-            sums_per_dept[id] += partial
+            existing = latest_rows_by_id.get(row.id)
+            if existing is None or row.last_update > existing.last_update:
+                latest_rows_by_id[row.id] = row
+
+        partial_sum = 0.0
+
+        # 2. Dla każdego "najnowszego" Row wybierz najnowsze RowDatas
+        for row in latest_rows_by_id.values():
+            if not row.row_datas:
+                continue
+
+            newest_row_data = max(
+                row.row_datas,
+                key=lambda rd: rd.last_update,
+            )
+
+            value = newest_row_data.expenditure_limit_0 or 0
+            partial_sum += float(value)
+            break
+
+        if dept_key in sums_per_dept:
+            # sums_per_dept[dept_key] += partial_sum
+            pass
         else:
-            sums_per_dept[id] = partial
-        
+            sums_per_dept[dept_key] = partial_sum
+
     return sums_per_dept
 
 @router.get("/{table_id}/get_needs_per_department")

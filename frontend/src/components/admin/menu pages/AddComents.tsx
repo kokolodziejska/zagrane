@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Formik, Form } from 'formik';
 import {
   Table,
   TableBody,
@@ -10,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import DialogAddComment from './DialogAddComent';
+import SelectColumns from '../SelectColumns';
 
 interface SelectValue {
   id: number;
@@ -63,6 +65,12 @@ interface BudgetData {
 
 type RowValues = string[];
 
+interface ColumnFormValues {
+  columns: number[]; // ID kolumn (indeksy)
+}
+
+// -------------- POMOCNICZE --------------
+
 const extractRowData = (data: Row): RowValues[] => {
   const getVal = (obj: any, key: string, nestedKey?: string) => {
     if (!obj) return null;
@@ -91,8 +99,7 @@ const extractRowData = (data: Row): RowValues[] => {
       getVal(r, 'financial_needs_0'),
       getVal(r, 'expenditure_limit_0'),
       getVal(r, 'unallocated_task_funds_0'),
-      getVal(r
-        , 'contract_amount_0'),
+      getVal(r, 'contract_amount_0'),
       getVal(r, 'contract_number_0'),
       getVal(r, 'financial_needs_1'),
       getVal(r, 'expenditure_limit_1'),
@@ -153,6 +160,8 @@ async function get_table_data(tableId: number): Promise<RowValues[]> {
   }
 }
 
+// -------------- GŁÓWNY KOMPONENT --------------
+
 function AddComents() {
   const [headers, setHeaders] = useState<string[] | null>(null);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
@@ -209,68 +218,119 @@ function AddComents() {
 
   const selectedRowsData = selectedRows.map((i) => tableRows[i]);
 
+  // kolumny jako opcje (id = index w headers)
+  const columnOptions = headers.map((h, idx) => ({
+    id: idx,
+    label: h,
+  }));
+
   return (
-    <div>
-      <div className="flex flex-col justify-end items-end w-[75vw]">
-        <Button
-          className="h-[3.5vh] w-[7vw]"
-          onClick={() => setDialogOpen(true)}
-        >
-          Wygeneruj PDF
-        </Button>
-      </div>
+    <Formik<ColumnFormValues>
+      enableReinitialize
+      initialValues={{
+        columns: headers.map((_, idx) => idx), // domyślnie wszystkie kolumny
+      }}
+      onSubmit={() => {
+        // nie korzystamy z submit, tylko z wartości w czasie rzeczywistym
+      }}
+    >
+      {({ values }) => {
+        const selectedColumnIds = values.columns || [];
 
-      <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[75vw] mt-[4vh]">
-        <Table className="min-w-max w-full">
-          <TableHeader className="bg-gray-100 sticky top-0 z-10">
-            <TableRow>
-              <TableHead className="w-10 px-2 py-2 text-center border-x border-y" />
-              {headers.map((header, j) => (
-                <TableHead
-                  key={j}
-                  className="px-2 py-2 text-left font-bold border-x border-y"
-                >
-                  {header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
+        const pdfHeaders = selectedColumnIds.map((colIdx) => headers[colIdx]);
 
-          <TableBody>
-            {tableRows.map((row, r) => (
-              <TableRow key={r} className="hover:bg-gray-50">
-                <TableCell className="px-2 py-2 text-center border-x border-y">
-                  <Checkbox
-                    checked={selectedRows.includes(r)}
-                    onCheckedChange={(v) =>
-                      handleRowCheckboxChange(r, v === true)
-                    }
-                  />
-                </TableCell>
+        const pdfRows = selectedRowsData.map((row) =>
+          selectedColumnIds.map((colIdx) => row[colIdx]),
+        );
 
-                {row.map((ele, e) => (
-                  <TableCell
-                    key={e}
-                    className="px-4 py-2 text-left border-x border-y"
-                  >
-                    {ele}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+        return (
+          <Form>
+            
+            <div className="flex flex-col gap-3 w-[75vw]">
+              <div className="flex flex-col gap-4 w-[75vw]">
 
-      {dialogOpen && (
-        <DialogAddComment
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          headers={headers}
-          rows={selectedRowsData}
-        />
-      )}
-    </div>
+ 
+                    <div className="flex justify-end items-center">
+                      <Button
+                        type="button"
+                        className="h-[3.5vh] w-[7vw]"
+                        onClick={() => setDialogOpen(true)}
+                        disabled={
+                          selectedRows.length === 0 ||
+                          selectedColumnIds.length === 0
+                        }
+                      >
+                        Wygeneruj PDF
+                      </Button>
+                    </div>
+
+                   
+                    <div className="flex justify-start items-start">
+                      <SelectColumns
+                        name="columns"
+                        options={columnOptions}
+                      />
+                    </div>
+
+                  </div>
+
+            </div>
+
+            {/* TABELA */}
+            <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[75vw] mt-[4vh]">
+              <Table className="min-w-max w-full">
+                <TableHeader className="bg-gray-100 sticky top-0 z-10">
+                  <TableRow>
+                    <TableHead className="w-10 px-2 py-2 text-center border-x border-y" />
+                    {headers.map((header, j) => (
+                      <TableHead
+                        key={j}
+                        className="px-2 py-2 text-left font-bold border-x border-y"
+                      >
+                        {header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {tableRows.map((row, r) => (
+                    <TableRow key={r} className="hover:bg-gray-50">
+                      <TableCell className="px-2 py-2 text-center border-x border-y">
+                        <Checkbox
+                          checked={selectedRows.includes(r)}
+                          onCheckedChange={(v) =>
+                            handleRowCheckboxChange(r, v === true)
+                          }
+                        />
+                      </TableCell>
+
+                      {row.map((ele, e) => (
+                        <TableCell
+                          key={e}
+                          className="px-4 py-2 text-left border-x border-y"
+                        >
+                          {ele}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {dialogOpen && (
+              <DialogAddComment
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                headers={pdfHeaders}
+                rows={pdfRows}
+              />
+            )}
+          </Form>
+        );
+      }}
+    </Formik>
   );
 }
 

@@ -4,6 +4,12 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime # <-- Imports the specific class
 from decimal import Decimal
 
+class DeptLimitUpdateRequest(BaseModel):
+    updates: List[List] 
+
+class BudgetUpdateRequest(BaseModel):
+    budget: Decimal
+    
 class DivisionRead(BaseModel):
     id: int
     value: str
