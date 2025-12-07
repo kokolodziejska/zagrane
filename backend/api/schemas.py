@@ -14,15 +14,18 @@ class ChapterRead(BaseModel):
     value: str
     model_config = ConfigDict(from_attributes=True)
 
-class ParagraphRead(BaseModel):
-    id: int
-    value: str
-    model_config = ConfigDict(from_attributes=True)
 
 class ExpenseGroupRead(BaseModel):
     id: int
     definition: str
     model_config = ConfigDict(from_attributes=True)
+
+class ParagraphRead(BaseModel):
+    id: int
+    value: str
+    expense_group: ExpenseGroupRead = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 class TaskRead(BaseModel):
     id: int
