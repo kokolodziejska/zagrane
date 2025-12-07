@@ -7,7 +7,7 @@ from passlib.hash import argon2
 
 from .database import engine, Base, AsyncSessionLocal
 from .models import (
-    Authentication, Users, Departments, UserTypes, Tables, 
+    Authentication, Tasks, Users, Departments, UserTypes, Tables, 
     Statuses, DepartmentTables, Rows, Divisions, Chapters, 
     Paragraphs, ExpenseGroups, RowDatas
 )
@@ -29,6 +29,11 @@ async def init_db():
             
             dept = Departments(type="Departament A")
             session.add(dept)
+            
+            task_full = Tasks(value="22.1.1.1", type="action", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
+            session.add(task_full)
+            task = Tasks(value="22.1", type="task", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
+            session.add(task)
             
             stat = Statuses(value="Active")
             session.add(stat)
@@ -125,8 +130,8 @@ async def init_db():
                 expense_group_id=exp_group.id,
                 
                 # Required Data Fields
-                task_budget_full="1.1.1.1.",
-                task_budget_function_task="1.1.",
+                task_budget_full=task_full,
+                task_budget_function=task,
                 funding_source="A",
                 budget_amount=Decimal("100000.00"),
 

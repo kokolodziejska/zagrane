@@ -74,6 +74,8 @@ async def get_table_hierarchy(table_id: int, db: AsyncSession = Depends(get_db))
                         joinedload(RowDatas.chapter),
                         joinedload(RowDatas.paragraph),
                         joinedload(RowDatas.expense_group),
+                        joinedload(RowDatas.task_budget_full),
+                        joinedload(RowDatas.task_budget_function),
                     )
                 )
             )
