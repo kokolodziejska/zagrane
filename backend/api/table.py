@@ -4,55 +4,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List
-
-HEADERS = [
-    "Część budżetowa",
-    "Dział",
-    "Rozdział",
-    "Paragraf",
-    "Źródło finansowania",
-    "Grupa wydatków",
-    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
-    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
-    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
-    "Potrzeby finansowe na rok 2029",
-    "Limit wydatków na rok 2029",
-    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
-    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
-    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
-    "Budżet zadaniowy (w pełnej szczegółowości)",
-    "Budżet zadaniowy (nr funkcji, nr zadania)",
-    "Nazwa programu/projektu",
-    "W przypadku dotacji - z kim zawarta umowa/planowana do zawarcia umowa",
-    "Nazwa komórki organizacyjnej",
-    "Podstawa prawna udzielenia dotacji",
-    "Plan WI",
-    "Dysponent środków",
-    "Budżet",
-    "Nazwa zadania",
-    "Szczegółowe uzasadnienie realizacji zadania",
-    "Przeznaczenie wydatków wg obszaru działalności: cyberbezpieczeństwo/sztuczna inteligencja/koszty funkcjonowania/inne (wpisać jakie?)",
-    "Potrzeby finansowe na rok 2026",
-    "Limit wydatków na rok 2026",
-    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
-    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
-    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
-    "Potrzeby finansowe na rok 2027",
-    "Limit wydatków na rok 2027",
-    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
-    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
-    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego",
-    "Potrzeby finansowe na rok 2028",
-    "Limit wydatków na rok 2028",
-    "Kwota na realizację zadań w 2026 roku, która nie została zabezpieczona w limicie publicznego",
-    "Kwota zawartej umowy/wniosku o udzielenie zamówienia publicznego",
-    "Nr umowy/nr wniosku o udzielenie zamówienia publicznego"
-]
-
-from db.database import get_db
+from api.schemas import HEADERS
+from api.excel import generete_excel
+from db.database import get_db, AsyncSessionLocal
 from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapters, Paragraphs, ExpenseGroups
+from fastapi.responses import StreamingResponse
+from io import BytesIO
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
+
+@router.get("/{table_id}/generate_spreadsheet")
+async def get_excel(table_id: int):
+    async with AsyncSessionLocal() as db:
+        df = await generete_excel(table_id, db)
+
+    if df is None or df.empty:
+        raise HTTPException(status_code=404, detail="No data to generate Excel")
+
+    stream = BytesIO()
+    df.to_excel(stream, index=False, engine='openpyxl')
+    stream.seek(0)
+    
+    return StreamingResponse(
+        stream,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={"Content-Disposition": f"attachment; filename=table_{table_id}.xlsx"}
+    )
+    
 
 @router.get("/headers", response_model=List[str])
 async def get_table_headers():

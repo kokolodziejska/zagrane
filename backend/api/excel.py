@@ -34,8 +34,8 @@ def dto_to_rows(dto):
                     HEADERS[3]: row_data.paragraph.value,
                     HEADERS[4]: row_data.funding_source,
                     HEADERS[5]: row_data.expense_group.definition,
-                    HEADERS[6]: row_data.task_budget_full,
-                    HEADERS[7]: row_data.task_budget_function_task,
+                    HEADERS[6]: row_data.task_budget_full.value,
+                    HEADERS[7]: row_data.task_budget_function.value,
                     HEADERS[8]: row_data.program_project_name,
                     HEADERS[9]: row_data.organizational_unit_name,
                     HEADERS[10]: row_data.plan_wi,
@@ -90,6 +90,8 @@ async def generete_excel(table_id: int, db: AsyncSession = Depends(get_db)):
                         joinedload(RowDatas.chapter),
                         joinedload(RowDatas.paragraph),
                         joinedload(RowDatas.expense_group),
+                        joinedload(RowDatas.task_budget_full),
+                        joinedload(RowDatas.task_budget_function),
                     )
                 )
             )
@@ -99,10 +101,8 @@ async def generete_excel(table_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(query)
     table = result.scalars().first()
     dto = TableFullDTO.model_validate(table)
+    print(dto.model_dump_json())
     rows = dto_to_rows(dto)
     df = pd.DataFrame(rows)
-    dir_path = "../user_files"
-    os.makedirs(dir_path, exist_ok=True)
-    df.to_excel(f"{dir_path}/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx", index=False)
 
-    return dto
+    return df
