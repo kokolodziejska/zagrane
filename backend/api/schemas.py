@@ -1,6 +1,7 @@
+from time import time
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional, Dict, Any
-from datetime import time
+from datetime import datetime # <-- Imports the specific class
 from decimal import Decimal
 
 class DivisionRead(BaseModel):
@@ -44,7 +45,7 @@ class RowDataDTO(BaseModel):
     id: int
     row_id: int
     last_user_id: int
-    last_update: time
+    last_update: datetime
 
     budget_part: str
     division: DivisionRead = None
@@ -108,15 +109,15 @@ class RowDataDTO(BaseModel):
 
 class RowDTO(BaseModel):
     id: int
-    last_update: time
+    last_update: datetime
     next_year: bool
     row_datas: List[RowDataDTO] = []
     model_config = ConfigDict(from_attributes=True)
 
 class DepartmentTableDTO(BaseModel):
     id: int
-    start: time
-    end: time
+    start: datetime
+    end: datetime
     status: StatusRead
     department: DepartmentRead
     rows: List[RowDTO] = []
@@ -129,6 +130,18 @@ class TableFullDTO(BaseModel):
     isOpen: bool
     budget: float
     department_tables: List[DepartmentTableDTO] = []
+    model_config = ConfigDict(from_attributes=True)
+
+class ChapterWithParagraphsRead(BaseModel):
+    id: int
+    value: str
+    paragraphs: List['ParagraphRead'] = []
+    model_config = ConfigDict(from_attributes=True)
+
+class DivisionWithChaptersRead(BaseModel):
+    id: int
+    value: str
+    chapters: List[ChapterRead] = []
     model_config = ConfigDict(from_attributes=True)
 
 HEADERS = [
