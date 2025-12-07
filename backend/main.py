@@ -9,6 +9,8 @@ from api.user import router as user_router
 from api.table import router as table_router
 from api.chapters import router as chapters_router
 from api.divisions import router as divisions_router
+from api.department import router as department_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,3 +46,4 @@ app.include_router(user_router)
 app.include_router(table_router)
 app.include_router(chapters_router)
 app.include_router(divisions_router)
+app.include_router(department_router)
