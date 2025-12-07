@@ -531,20 +531,14 @@ async def seed_history_test(session):
         task_full = (await session.execute(select(Tasks).where(Tasks.type == "action"))).scalars().first()
         task_func = (await session.execute(select(Tasks).where(Tasks.type == "task"))).scalars().first()
 
-        # 2. Department table for dept B
-        dept_table_b = DepartmentTables(
-            table_id=table.id,
-            department_id=dept_b.id,
-            status_id=stat.id,
-            start=datetime.now(),
-            end= datetime.now() + timedelta(days=365)
-        )
-        session.add(dept_table_b)
-        await session.flush()
+        if not all([user, dept_table, division, chapter, paragraph, exp_group, task_full, task_func]):
+            print("!!! Missing dependencies. Please run the main 'seed()' function first.")
+            return
 
-        # 3. Row for dept B
-        row_b1 = Rows(
-            department_table_id=dept_table_b.id,
+        # 2. Create ONE single Row container
+        # This represents the "Identity" of the row.
+        history_row = Rows(
+            department_table_id=dept_table.id,
             last_update=datetime.now(),
             next_year=False
         )
@@ -557,9 +551,10 @@ async def seed_history_test(session):
         row_data_v1 = RowDatas(
             row_id=history_row.id, # Points to the same row
             last_user_id=user.id,
-            last_update=datetime.now(),
-            budget_part="2",
-            division_id=div.id,
+            last_update=date_v1,   # Old Date
+            
+            budget_part="1",
+            division_id=division.id,
             chapter_id=chapter.id,
             paragraph_id=paragraph.id,
             expense_group_id=exp_group.id,
@@ -650,4 +645,3 @@ async def seed_history_test(session):
         print(f"!!! Error during history seeding: {e}")
         await session.rollback()
         raise e
-   
