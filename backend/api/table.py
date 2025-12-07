@@ -1,4 +1,4 @@
-from api.schemas import TableFullDTO
+from api.schemas import TableFullDTO, BudgetUpdateRequest
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -12,6 +12,27 @@ from fastapi.responses import StreamingResponse
 from io import BytesIO
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
+
+@router.put("/{table_id}/update_budget")
+async def update_table_budget(
+    table_id: int,
+    req: BudgetUpdateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Tables).where(Tables.id == table_id))
+    table = result.scalars().first()
+
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    table.budget = req.budget
+
+    db.add(table)
+    await db.commit()
+    await db.refresh(table)
+
+    return {"id": table.id, "budget": str(table.budget)}
+
 
 @router.get("/{table_id}/get_total_budget")
 async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
