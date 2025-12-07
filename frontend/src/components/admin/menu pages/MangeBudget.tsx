@@ -8,6 +8,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import SelectDivision from '@/components/admin/SelectDivision';
+
+type Division = {
+  id: number;
+  value: string;
+};
 
 type RowValues = string[];
 
@@ -133,12 +139,25 @@ async function get_table_data(tableId: number): Promise<EnrichedRow[]> {
     }
 }
 
+async function get_divisions(): Promise<Division[]> {
+    try {
+        const res = await fetch('/api/divisions/');
+        if (!res.ok) return [];
+        return (await res.json()) as Division[];
+    } catch {
+        return [];
+    }
+}
+
 function MangeBudget() {
     const TABLE_ID = 1;
 
     const [headers, setHeaders] = useState<string[] | null>(null);
     const [tableRows, setTableRows] = useState<EnrichedRow[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [divisions, setDivisions] = useState<Division[]>([]);
+    const [divisionsLoading, setDivisionsLoading] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyRows, setHistoryRows] = useState<EnrichedRow[]>([]);
@@ -157,6 +176,23 @@ function MangeBudget() {
                 if (r === targetRow) {
                     const updatedValues = [...r.values];
                     updatedValues[colIndex] = newValue;
+                    return { ...r, values: updatedValues };
+                }
+                return r;
+            })
+        );
+    };
+
+    // specjalny handler dla działu -> czyści rozdział, paragraf i grupę wydatków
+    const handleDivisionChange = (targetRow: EnrichedRow, newDivision: string) => {
+        setTableRows(prev =>
+            prev.map(r => {
+                if (r === targetRow) {
+                    const updatedValues = [...r.values];
+                    updatedValues[1] = newDivision; // division
+                    updatedValues[2] = '';          // chapter
+                    updatedValues[3] = '';          // paragraph
+                    updatedValues[5] = '';          // expense_group
                     return { ...r, values: updatedValues };
                 }
                 return r;
@@ -208,33 +244,38 @@ function MangeBudget() {
     };
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchAll = async () => {
             setLoading(true);
-            const [h, rows] = await Promise.all([
+            setDivisionsLoading(true);
+            const [h, rows, divs] = await Promise.all([
                 get_table_headers(),
-                get_table_data(TABLE_ID)
+                get_table_data(TABLE_ID),
+                get_divisions(),
             ]);
             setHeaders(h);
             setTableRows(rows);
+            setDivisions(divs);
             setLoading(false);
+            setDivisionsLoading(false);
         };
-        fetchData();
+        fetchAll();
     }, []);
 
     if (loading || !headers) return <div>Ładowanie danych...</div>;
-    if (tableRows.length === 0) return (
-        <div>
-            Brak danych
-            <div className="mt-4">
-                <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 text-xl"
-                    onClick={handleAddRow}
-                >
-                    +
-                </Button>
+    if (tableRows.length === 0)
+        return (
+            <div>
+                Brak danych
+                <div className="mt-4">
+                    <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 text-xl"
+                        onClick={handleAddRow}
+                    >
+                        +
+                    </Button>
+                </div>
             </div>
-        </div>
-    );
+        );
 
     const displayRows: DisplayRow[] = (() => {
         const groups = new Map<string, EnrichedRow[]>();
@@ -313,7 +354,7 @@ function MangeBudget() {
                                 key={rowIndex}
                                 className="hover:bg-gray-50"
                             >
-                                {/* HISTORY "H" BUTTON – TERAZ PIERWSZA KOLUMNA */}
+                                {/* HISTORY "H" BUTTON – PIERWSZA KOLUMNA */}
                                 <TableCell className="px-1 py-1 text-center border-x border-y align-middle whitespace-normal break-words">
                                     {history.length > 0 && (
                                         <button
@@ -327,7 +368,7 @@ function MangeBudget() {
                                     )}
                                 </TableCell>
 
-                                {/* DELETE "-" BUTTON – TERAZ DRUGA KOLUMNA */}
+                                {/* DELETE "-" BUTTON – DRUGA KOLUMNA */}
                                 <TableCell className="px-1 py-1 text-center border-x border-y align-middle whitespace-normal break-words">
                                     <button
                                         type="button"
@@ -340,6 +381,26 @@ function MangeBudget() {
                                 </TableCell>
 
                                 {row.values.map((v, colIndex) => {
+                                    // kolumna 1 = "division" -> SelectDivision
+                                    if (colIndex === 1) {
+                                        return (
+                                            <TableCell
+                                                key={colIndex}
+                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <SelectDivision
+                                                    value={v}
+                                                    divisions={divisions}
+                                                    loading={divisionsLoading}
+                                                    onChange={(newVal) =>
+                                                        handleDivisionChange(row, newVal)
+                                                    }
+                                                />
+                                            </TableCell>
+                                        );
+                                    }
+
                                     const isEditing =
                                         editingCell &&
                                         editingCell.rowIndex === rowIndex &&
