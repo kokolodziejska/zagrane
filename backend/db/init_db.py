@@ -40,7 +40,7 @@ async def seed(session):
 
         u_type = UserTypes(type="admin")
         session.add(u_type)
-        dept = Departments(type="Departament A")
+        dept = Departments(type="Departament A", valid_from="2024-01-01", valid_to="2026-01-01")
         session.add(dept)
         task_full = Tasks(value="22.1.1.1", type="action", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
         session.add(task_full)
@@ -347,7 +347,7 @@ async def seed_like_a_boss(session):
 
         u_type = UserTypes(type="admin")
         session.add(u_type)
-        dept = Departments(type="Departament A")
+        dept = Departments(type="Departament A", valid_from="2024-01-01", valid_to="2026-01-01")
         session.add(dept)
         task_full = Tasks(value="22.1.1.1", type="action", description="Koordynacja działalności oraz obsługa administracyjna i techniczna")
         session.add(task_full)

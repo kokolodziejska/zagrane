@@ -36,6 +36,8 @@ class Departments(Base):
     __tablename__ = "departments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     type: Mapped[str] = mapped_column(String, nullable=False)
+    valid_from: Mapped[str] = mapped_column(String, nullable=False)
+    valid_to: Mapped[str] = mapped_column(String, nullable=False)
 
 class UserTypes(Base):
     __tablename__ = "user_types"
