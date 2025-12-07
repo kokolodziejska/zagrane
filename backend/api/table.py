@@ -13,6 +13,36 @@ from io import BytesIO
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
 
+@router.get("/{table_id}/get_total_budget")
+async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
+    query = (
+        select(Tables)
+        .where(Tables.id == table_id)
+        .options(
+            selectinload(Tables.department_tables).options(
+                joinedload(DepartmentTables.department),
+                joinedload(DepartmentTables.status),
+                
+                selectinload(DepartmentTables.rows).options(
+                    selectinload(Rows.row_datas).options(
+                        joinedload(RowDatas.division),
+                        joinedload(RowDatas.chapter),
+                        joinedload(RowDatas.paragraph),
+                        joinedload(RowDatas.expense_group),
+                        joinedload(RowDatas.task_budget_full),
+                        joinedload(RowDatas.task_budget_function),
+                    )
+                )
+            )
+        )
+    )
+
+    result = await db.execute(query)
+    table = result.scalars().first()
+    dto = TableFullDTO.model_validate(table)
+        
+    return dto.budget
+
 @router.get("/{table_id}/get_limits_per_department")
 async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
     query = (
