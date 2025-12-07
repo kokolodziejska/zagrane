@@ -21,6 +21,15 @@ type Chapter = {
     value: string;
 };
 
+type Paragraph = {
+    id: number;
+    value: string;
+    expense_group: {
+        id: number;
+        definition: string;
+    };
+};
+
 type RowValues = string[];
 
 interface EnrichedRow {
@@ -189,6 +198,17 @@ async function get_chapters(divisionValue: string): Promise<Chapter[]> {
     }
 }
 
+async function get_paragraphs(chapterValue: string): Promise<Paragraph[]> {
+    if (!chapterValue) return [];
+    try {
+        const res = await fetch(`/api/chapters/${chapterValue}/paragraphs`);
+        if (!res.ok) return [];
+        return (await res.json()) as Paragraph[];
+    } catch {
+        return [];
+    }
+}
+
 const upsertChange = (
     prev: ChangeRecord[],
     updatedRow: EnrichedRow,
@@ -236,6 +256,9 @@ function MangeBudget() {
     const [chapters, setChapters] = useState<Record<string, Chapter[]>>({});
     const [chaptersLoading, setChaptersLoading] = useState<Record<string, boolean>>({});
 
+    const [paragraphs, setParagraphs] = useState<Record<string, Paragraph[]>>({});
+    const [paragraphsLoading, setParagraphsLoading] = useState<Record<string, boolean>>({});
+
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyRows, setHistoryRows] = useState<EnrichedRow[]>([]);
 
@@ -257,6 +280,14 @@ function MangeBudget() {
         const data = await get_chapters(divisionValue);
         setChapters(prev => ({ ...prev, [divisionValue]: data }));
         setChaptersLoading(prev => ({ ...prev, [divisionValue]: false }));
+    };
+
+    const loadParagraphs = async (chapterValue: string) => {
+        if (!chapterValue) return;
+        setParagraphsLoading(prev => ({ ...prev, [chapterValue]: true }));
+        const data = await get_paragraphs(chapterValue);
+        setParagraphs(prev => ({ ...prev, [chapterValue]: data }));
+        setParagraphsLoading(prev => ({ ...prev, [chapterValue]: false }));
     };
 
     const handleCellChange = (
@@ -295,6 +326,7 @@ function MangeBudget() {
         );
 
         setChangedRows(prevChanges => upsertChange(prevChanges, updatedRow, false, currentUserId));
+
         if (newDivision) {
             loadChapters(newDivision);
         }
@@ -305,6 +337,36 @@ function MangeBudget() {
         updatedValues[2] = newChapter;
         updatedValues[3] = '';
         updatedValues[5] = '';
+
+        const updatedRow: EnrichedRow = {
+            ...targetRow,
+            values: updatedValues,
+        };
+
+        setTableRows(prev =>
+            prev.map(r => (r === targetRow ? updatedRow : r))
+        );
+
+        setChangedRows(prevChanges => upsertChange(prevChanges, updatedRow, false, currentUserId));
+
+        if (newChapter) {
+            loadParagraphs(newChapter);
+        }
+    };
+
+    const handleParagraphChange = (targetRow: EnrichedRow, newParagraph: string) => {
+        const chapterValue = targetRow.values[2];
+        if (!chapterValue) {
+            return;
+        }
+
+        const chapterParagraphs = paragraphs[chapterValue] ?? [];
+        const paragraphObj = chapterParagraphs.find(p => p.value === newParagraph);
+        const expenseDefinition = paragraphObj?.expense_group?.definition ?? '';
+
+        const updatedValues = [...targetRow.values];
+        updatedValues[3] = newParagraph;
+        updatedValues[5] = expenseDefinition;
 
         const updatedRow: EnrichedRow = {
             ...targetRow,
@@ -399,6 +461,17 @@ function MangeBudget() {
             ) as string[];
             uniqueDivisions.forEach(d => {
                 loadChapters(d);
+            });
+
+            const uniqueChapters = Array.from(
+                new Set(
+                    rows
+                        .map(r => r.values[2])
+                        .filter(v => v && v.trim().length > 0)
+                )
+            ) as string[];
+            uniqueChapters.forEach(ch => {
+                loadParagraphs(ch);
             });
         };
         fetchAll();
@@ -584,6 +657,66 @@ function MangeBudget() {
                                                         )
                                                     }
                                                 />
+                                            </TableCell>
+                                        );
+                                    }
+
+                                    if (colIndex === 3) {
+                                        const chapterValue = row.values[2];
+                                        if (!chapterValue) {
+                                            return (
+                                                <TableCell
+                                                    key={colIndex}
+                                                    className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                >
+                                                    <span className="block w-full whitespace-normal break-words text-sm">
+                                                        {v}
+                                                    </span>
+                                                </TableCell>
+                                            );
+                                        }
+
+                                        const chapterParagraphs =
+                                            paragraphs[chapterValue] ?? [];
+                                        const isParagraphLoading =
+                                            paragraphsLoading[chapterValue] ??
+                                            false;
+
+                                        const paragraphOptions = chapterParagraphs.map(p => ({
+                                            id: p.id,
+                                            value: p.value,
+                                        }));
+
+                                        return (
+                                            <TableCell
+                                                key={colIndex}
+                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                onClick={e => e.stopPropagation()}
+                                            >
+                                                <SelectDivision
+                                                    value={v}
+                                                    divisions={paragraphOptions}
+                                                    loading={isParagraphLoading}
+                                                    onChange={newVal =>
+                                                        handleParagraphChange(
+                                                            row,
+                                                            newVal
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                        );
+                                    }
+
+                                    if (colIndex === 5) {
+                                        return (
+                                            <TableCell
+                                                key={colIndex}
+                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                            >
+                                                <span className="block w-full whitespace-normal break-words text-sm">
+                                                    {v}
+                                                </span>
                                             </TableCell>
                                         );
                                     }
