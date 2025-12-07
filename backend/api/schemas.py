@@ -23,12 +23,12 @@ class ExpenseGroupRead(BaseModel):
     definition: str
     model_config = ConfigDict(from_attributes=True)
 
-# class TaskRead(BaseModel):
-#     id: int
-#     value: str
-#     type: str
-#     description: str
-#     model_config = ConfigDict(from_attributes=True)
+class TaskRead(BaseModel):
+    id: int
+    value: str
+    type: str
+    description: str
+    model_config = ConfigDict(from_attributes=True)
 
 class DepartmentRead(BaseModel):
     id: int
@@ -54,8 +54,8 @@ class RowDataDTO(BaseModel):
     expense_group_id: int
     expense_group: ExpenseGroupRead = None
 
-    task_budget_full: str
-    task_budget_function_task: str
+    task_budget_full: TaskRead = None
+    task_budget_function: TaskRead = None
     program_project_name: Optional[str] = None
     organizational_unit_name: Optional[str] = None
     plan_wi: Optional[str] = None
