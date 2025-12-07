@@ -194,3 +194,12 @@ HEADERS = [
     "Podstawa prawna udzielenia dotacji",
     "Uwagi",
 ]
+
+class RowUpdateRequest(BaseModel):
+    tableId: int
+    departmentTableId: int
+    rowId: Optional[int] = None
+    isDeleted: bool = False
+    values: List[Any]
+    lastUserId: int
+    lastUpdate: str
