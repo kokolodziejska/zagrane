@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List
 
 from db.database import get_db
@@ -27,8 +28,15 @@ async def get_paragraphs_by_chapter(
             detail=f"Chapter with ID {chapter_value} not found"
         )
 
-    stmt = select(Paragraphs).where(Paragraphs.chapter_id == chapter.id).order_by(Paragraphs.value)
+    stmt = (
+        select(Paragraphs)
+        .options(
+            selectinload(Paragraphs.expense_group)
+        )
+        .where(Paragraphs.chapter_id == chapter.id)
+        .order_by(Paragraphs.value)
+    )
+
     result = await db.execute(stmt)
     paragraphs_orm = result.scalars().all()
-
     return [ParagraphRead.model_validate(p) for p in paragraphs_orm]
