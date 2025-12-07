@@ -16,14 +16,13 @@ const tab = {
   headers: ['Dział', 'Potrzebny Budżet (zł)', 'Przydziel Budżet (zł)', 'Różnica'],
 };
 
-// endpoint zawsze z table_id = 1
+
 async function getNeedsPerDepartment() {
   try {
     const res = await fetch('/api/tables/1/get_needs_per_department');
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    // np. { "Dział A": 11540, "Dział B": 20000 }
     return await res.json();
   } catch (err) {
     console.error('Error fetching needs per department:', err);
@@ -31,17 +30,29 @@ async function getNeedsPerDepartment() {
   }
 }
 
-// NOWY ENDPOINT – wartości dla 3 kolumny (Przydziel Budżet)
 async function getLimitsPerDepartment() {
   try {
     const res = await fetch('/api/tables/1/get_limits_per_department');
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    // np. { "Dział A": 10000, "Dział B": 15000 }
     return await res.json();
   } catch (err) {
     console.error('Error fetching limits per department:', err);
+    return null;
+  }
+}
+
+async function getTotalBudget() {
+  try {
+    const res = await fetch('/api/tables/1/get_total_budget');
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    // np. 1000000
+    return await res.json(); // liczba
+  } catch (err) {
+    console.error('Error fetching total budget:', err);
     return null;
   }
 }
@@ -58,40 +69,44 @@ function LimitBudget() {
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [editedBudgets, setEditedBudgets] = useState<string[]>([]);
 
-  // pobranie danych z endpointów przy mount
   useEffect(() => {
-    (async () => {
-      const needsData = await getNeedsPerDepartment();
-      if (!needsData) return;
+  (async () => {
+    // 1) Pobranie potrzeb działów
+    const needsData = await getNeedsPerDepartment();
+    if (!needsData) return;
 
-      const mapped: DepartmentRow[] = Object.entries(needsData).map(
-        ([name, needed]) => ({
-          name,
-          needed: Number(needed),
-        })
+    const mapped: DepartmentRow[] = Object.entries(needsData).map(
+      ([name, needed]) => ({
+        name,
+        needed: Number(needed),
+      })
+    );
+
+    setDepartments(mapped);
+
+    // 2) Pobranie globalnego limitu budżetu i ustawienie pola
+    const totalBudget = await getTotalBudget();
+    if (totalBudget !== null && totalBudget !== undefined) {
+      setBudgetLimit(String(totalBudget));
+    }
+
+    // 3) Pobranie limitów per dział (3 kolumna tabeli)
+    const limitsData = await getLimitsPerDepartment();
+
+    if (limitsData) {
+      setEditedBudgets(
+        mapped.map((dep) =>
+          limitsData[dep.name] !== undefined
+            ? String(limitsData[dep.name])
+            : ''
+        )
       );
+    } else {
+      setEditedBudgets(mapped.map(() => ''));
+    }
+  })();
+}, []);
 
-      setDepartments(mapped);
-
-      // próbujemy pobrać limity dla 3 kolumny
-      const limitsData = await getLimitsPerDepartment();
-
-      if (limitsData) {
-        // ustaw 3 kolumnę na wartości z endpointu,
-        // dopasowane po nazwie działu
-        setEditedBudgets(
-          mapped.map((dep) =>
-            limitsData[dep.name] !== undefined
-              ? String(limitsData[dep.name])
-              : ''
-          )
-        );
-      } else {
-        // fallback – puste wartości
-        setEditedBudgets(mapped.map(() => ''));
-      }
-    })();
-  }, []);
 
   // Funkcja do obliczania różnicy
   const calculateDifference = (needed: number, assigned: number) => {
