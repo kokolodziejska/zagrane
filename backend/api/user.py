@@ -79,6 +79,8 @@ class UserCreate(BaseModel):
     name: str
     surname: str
     password: str
+    department: str
+    user_type: str
 
 class ChangeDetails(BaseModel):
     name: str
@@ -90,6 +92,8 @@ class UserRead(BaseModel):
     username: str
     name: str
     surname: str
+    department: str
+    user_type: str
 
 # Changed email -> username
 class UserValidate(BaseModel):
@@ -101,64 +105,85 @@ class UserValidate(BaseModel):
 
 @router.post("/register")
 async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    
     # Clean inputs
-    username_clean = user.username.strip() # Removed .lower() if case sensitivity matters for usernames
+    username_clean = user.username.strip()
     name_clean = user.name.strip()
     surname_clean = user.surname.strip()
-    
-    # 1. Check if user exists (using user_name column)
+    user_type_clean = user.user_type.strip()
+    department_clean = user.department.strip()
+
+    # 1. Check if user exists
     result = await db.execute(select(Users).where(Users.user_name == username_clean))
     existing = result.scalars().first()
     if existing:
         raise HTTPException(status_code=409, detail="Nazwa użytkownika jest już zajęta")
 
-    # 2. Validate format
+    # 2. Validate input
     if error := validate_name(name_clean):
         raise HTTPException(status_code=400, detail=error)
-    
+
     if error := validate_surname(surname_clean):
         raise HTTPException(status_code=400, detail=error)
-    
+
     if error := validate_password(user.password):
         raise HTTPException(status_code=400, detail=error)
-        
-    # 3. Get Default Foreign Keys (Type & Dept)
-    res_type = await db.execute(select(UserTypes).where(UserTypes.type.in_(['user', 'employee'])))
-    default_type = res_type.scalars().first()
-    if not default_type:
-        # Fallback to any type if specific ones aren't found
-        res_any_type = await db.execute(select(UserTypes))
-        default_type = res_any_type.scalars().first()
-        if not default_type:
-             raise HTTPException(status_code=500, detail="Błąd konfiguracji: brak ról użytkowników.")
 
-    res_dept = await db.execute(select(Departments))
-    default_dept = res_dept.scalars().first()
-    if not default_dept:
-        raise HTTPException(status_code=500, detail="Błąd konfiguracji: brak działów.")
+    # 3. Resolve User Type
+    res_type = await db.execute(
+        select(UserTypes).where(UserTypes.type == user_type_clean)
+    )
+    db_user_type = res_type.scalars().first()
+
+    if not db_user_type:
+        # fallback
+        res_type_fallback = await db.execute(
+            select(UserTypes).where(UserTypes.type.in_(["user", "employee"]))
+        )
+        db_user_type = res_type_fallback.scalars().first()
+
+    if not db_user_type:
+        raise HTTPException(status_code=400, detail="Niepoprawny typ użytkownika")
+
+    # 4. Resolve Department
+    res_dept = await db.execute(
+        select(Departments).where(Departments.type == department_clean)
+    )
+    db_dept = res_dept.scalars().first()
+
+    if not db_dept:
+        raise HTTPException(status_code=400, detail="Niepoprawny dział")
 
     try:
-        # 4. Create Authentication Record FIRST (to get the PK)
+        # 5. Create auth record
         new_password_hash = hash_password(user.password)
         new_auth = Authentication(password=new_password_hash)
         db.add(new_auth)
-        # Flush sends query to DB and populates new_auth.user_id, but doesn't commit transaction yet
-        await db.flush() 
 
-        # 5. Create User Record linked to Auth
+        # Flush to get PK
+        await db.flush()
+
+        # 6. Create user
         new_user = Users(
-            auth_id=new_auth.user_id, # Link using the ID generated above
-            user_name=username_clean, 
+            auth_id=new_auth.user_id,
+            user_name=username_clean,
             name=name_clean,
             surname=surname_clean,
-            department_id=default_dept.id,
-            user_type_id=default_type.id
+            department_id=db_dept.id,
+            user_type_id=db_user_type.id
         )
         db.add(new_user)
+
         await db.commit()
-        
-        return {"id": new_user.id, "username": new_user.user_name, "name": new_user.name}
+        await db.refresh(new_user)
+
+        return {
+            "id": new_user.id,
+            "username": new_user.user_name,
+            "name": new_user.name,
+            "surname": new_user.surname,
+            "department": db_dept.type,
+            "user_type": db_user_type.type
+        }
 
     except IntegrityError:
         await db.rollback()
@@ -220,16 +245,24 @@ async def change_details(
     }
 
 
-@router.get("/all-users", response_model=List[UserRead])
+@router.get("/all-users", response_model=list[UserRead])
 async def get_all_users(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Users))
+    result = await db.execute(
+        select(Users).options(
+            selectinload(Users.department),
+            selectinload(Users.user_type)
+        )
+    )
     users = result.scalars().all()
+
     return [
         UserRead(
             id=u.id,
-            username=u.user_name, # Map user_name to username
+            username=u.user_name,
             name=u.name,
             surname=u.surname,
+            department=u.department.type if u.department else None,
+            user_type=u.user_type.type if u.user_type else None
         )
         for u in users
     ]

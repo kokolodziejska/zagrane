@@ -4,6 +4,8 @@ import { Formik, Field, Form } from 'formik';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import SelectReservationVariantPayment from '../SelectUserType';
+import SelectDepartment from '../SelectDep';
 
 import {
   Table,
@@ -14,11 +16,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type User = {
+  type User = {
   id: number;
   username: string;
   name: string;
   surname: string;
+  department: string;   
+  user_type: string;    
 };
 
 function MangeUser() {
@@ -53,8 +57,11 @@ function MangeUser() {
       .required('Podaj nazwisko użytkownika')
       .min(3, 'Nazwisko użytkownika musi mieć przynajmniej 3 znaki')
       .max(40, 'Nazwisko użytkownika może mieć maksymalnie 15 znaków'),
-    department_id: yup.string().trim().required('Podaj dział'),
-    user_type_id: yup.string().trim().required('Podaj typ'),
+    department: yup.string().required('Wybierz dział'),
+    user_type: yup
+  .string()
+  .oneOf(['admin', 'user'], 'Wybierz admin lub user')
+  .required('Wybierz typ użytkownika'),
   });
 
   // pobranie użytkowników z backendu
@@ -220,16 +227,8 @@ function MangeUser() {
                     <Field name="department_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="department_id">Dział</Label>
-                          <Input
-                            id="department_id"
-                            type="string"
-                            placeholder="min cyf"
-                            {...field}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            }}
-                          />
+                          <Label htmlFor="department">Dział</Label>
+                          <SelectDepartment name="department" />
                           <p
                             className={`text-xs text-center ${
                               meta.touched && meta.error ? 'text-red-500' : 'invisible'
@@ -247,16 +246,8 @@ function MangeUser() {
                     <Field name="user_type_id">
                       {({ field, meta }: any) => (
                         <div className="grid gap-2">
-                          <Label htmlFor="user_type_id">Typ użytkownika</Label>
-                          <Input
-                            id="user_type_id"
-                            type="string"
-                            placeholder="admin"
-                            {...field}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                            }}
-                          />
+                          <Label htmlFor="user_type">Typ użytkownika</Label>
+                          <SelectReservationVariantPayment name="user_type" />
                           <p
                             className={`text-xs text-center ${
                               meta.touched && meta.error ? 'text-red-500' : 'invisible'
@@ -317,8 +308,15 @@ function MangeUser() {
                   <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
                     Nazwisko
                   </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Dział
+                  </TableHead>
+                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+                    Typ użytkownika
+                  </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id} className="hover:bg-gray-50">
@@ -334,9 +332,16 @@ function MangeUser() {
                     <TableCell className="px-2 py-2 text-left border-x border-y">
                       {user.surname}
                     </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.department}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-left border-x border-y">
+                      {user.user_type}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
+
             </Table>
           </div>
         )}

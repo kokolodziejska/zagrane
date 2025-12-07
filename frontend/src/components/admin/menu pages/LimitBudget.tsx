@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -14,29 +14,99 @@ import { Button } from '@/components/ui/button';
 
 const tab = {
   headers: ['Dział', 'Potrzebny Budżet (zł)', 'Przydziel Budżet (zł)', 'Różnica'],
-  rows: [
-    ['Dział A', '50000', '48000', ''],
-    ['Dział B', '70000', '68000', ''],
-    ['Dział C', '30000', '32000', ''],
-    ['Dział D', '30000', '32000', ''],
-    ['Dział E', '30000', '32000', ''],
-    ['Dział F', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-    ['Dział G', '30000', '32000', ''],
-  ],
+};
+
+
+async function getNeedsPerDepartment() {
+  try {
+    const res = await fetch('/api/tables/1/get_needs_per_department');
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching needs per department:', err);
+    return null;
+  }
+}
+
+async function getLimitsPerDepartment() {
+  try {
+    const res = await fetch('/api/tables/1/get_limits_per_department');
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching limits per department:', err);
+    return null;
+  }
+}
+
+async function getTotalBudget() {
+  try {
+    const res = await fetch('/api/tables/1/get_total_budget');
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    // np. 1000000
+    return await res.json(); // liczba
+  } catch (err) {
+    console.error('Error fetching total budget:', err);
+    return null;
+  }
+}
+
+type DepartmentRow = {
+  name: string;   // nazwa działu (klucz z JSON)
+  needed: number; // potrzebny budżet (wartość z JSON)
 };
 
 function LimitBudget() {
   const [budgetLimit, setBudgetLimit] = useState('');
-  const [assignedBudget, setAssignedBudget] = useState('');
-  const [editedBudgets, setEditedBudgets] = useState(tab.rows.map((row) => row[2]));
+  const [assignedBudget, setAssignedBudget] = useState(''); // zostawiam, może użyjesz później
+
+  const [departments, setDepartments] = useState<DepartmentRow[]>([]);
+  const [editedBudgets, setEditedBudgets] = useState<string[]>([]);
+
+  useEffect(() => {
+  (async () => {
+    // 1) Pobranie potrzeb działów
+    const needsData = await getNeedsPerDepartment();
+    if (!needsData) return;
+
+    const mapped: DepartmentRow[] = Object.entries(needsData).map(
+      ([name, needed]) => ({
+        name,
+        needed: Number(needed),
+      })
+    );
+
+    setDepartments(mapped);
+
+    // 2) Pobranie globalnego limitu budżetu i ustawienie pola
+    const totalBudget = await getTotalBudget();
+    if (totalBudget !== null && totalBudget !== undefined) {
+      setBudgetLimit(String(totalBudget));
+    }
+
+    // 3) Pobranie limitów per dział (3 kolumna tabeli)
+    const limitsData = await getLimitsPerDepartment();
+
+    if (limitsData) {
+      setEditedBudgets(
+        mapped.map((dep) =>
+          limitsData[dep.name] !== undefined
+            ? String(limitsData[dep.name])
+            : ''
+        )
+      );
+    } else {
+      setEditedBudgets(mapped.map(() => ''));
+    }
+  })();
+}, []);
+
 
   // Funkcja do obliczania różnicy
   const calculateDifference = (needed: number, assigned: number) => {
@@ -51,33 +121,34 @@ function LimitBudget() {
     setAssignedBudget(e.target.value);
   };
 
-  const handleEditedBudgetChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleEditedBudgetChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const newBudgets = [...editedBudgets];
     newBudgets[index] = e.target.value;
     setEditedBudgets(newBudgets);
   };
 
-  const totalAssignedBudget = editedBudgets.reduce((total, value) => {
-    return total + parseFloat(value || '0');
-  }, 0);
+  const getAssigned = (index: number) =>
+    parseFloat(editedBudgets[index] || '0');
+
+  const totalNeededBudget = departments.reduce(
+    (sum, dep) => sum + dep.needed,
+    0
+  );
+
+  const totalAssignedBudget = departments.reduce(
+    (sum, _dep, index) => sum + getAssigned(index),
+    0
+  );
 
   const remainingBudget = parseFloat(budgetLimit || '0') - totalAssignedBudget;
 
-  const calculateColumnSum = (columnIndex: number) => {
-    return tab.rows.reduce((sum, row, index) => {
-      const value =
-        columnIndex === 1
-          ? parseFloat(row[1])
-          : columnIndex === 2
-            ? parseFloat(editedBudgets[index] || '0')
-            : calculateDifference(parseFloat(row[1]), parseFloat(editedBudgets[index] || '0'));
-      return sum + (isNaN(value) ? 0 : value);
-    }, 0);
-  };
-
-  const totalNeededBudget = calculateColumnSum(1);
-  const totalAssigned = calculateColumnSum(2);
-  const totalDifference = calculateColumnSum(3);
+  const totalDifference = departments.reduce(
+    (sum, dep, index) => sum + calculateDifference(dep.needed, getAssigned(index)),
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -138,7 +209,7 @@ function LimitBudget() {
           <Input
             id="sumaAssigned"
             type="text"
-            value={totalAssigned}
+            value={totalAssignedBudget}
             readOnly
             className="bg-gray-100 text-gray-700 cursor-default flex-grow text-center"
           />
@@ -167,7 +238,7 @@ function LimitBudget() {
                   key={j}
                   className="px-4 py-3 text-left font-bold text-gray-800 border-x border-y text-center"
                   style={{
-                    width: j === 0 ? '5vw' : '15vw',
+                    width: j === 0 ? '7vw' : '15vw',
                   }}
                 >
                   {header}
@@ -180,40 +251,52 @@ function LimitBudget() {
         <div className="overflow-x-auto max-h-[55vh] scrollbar-hide">
           <Table className="min-w-max w-full">
             <TableBody>
-              {tab.rows.map((row, r) => (
+              {departments.map((dep, r) => (
                 <TableRow key={r} className="hover:bg-gray-50">
-                  {row.map((ele, e) => (
-                    <TableCell
-                      key={e}
-                      className={`px-4 py-2 text-left border-x border-y ${
-                        e === 0 ? 'pl-4 font-medium' : 'text-center'
-                      }`}
-                      style={{
-                        width: e === 0 ? '5vw' : '15vw',
-                      }}
-                    >
-                      {e === 2 ? (
-                        <Input
-                          type="text"
-                          value={editedBudgets[r]}
-                          onChange={(event) => handleEditedBudgetChange(event, r)}
-                          className="w-[11vw] text-center"
-                        />
-                      ) : e === 3 ? (
-                        <Input
-                          type="text"
-                          value={calculateDifference(
-                            parseFloat(row[1]),
-                            parseFloat(editedBudgets[r] || '0')
-                          )}
-                          readOnly
-                          className="w-full bg-gray-100 text-gray-700 cursor-default text-center"
-                        />
-                      ) : (
-                        ele
+                  {/* kolumna 1 – nazwa działu */}
+                  <TableCell
+                    className="px-4 py-2 text-left border-x border-y pl-4 font-medium"
+                    style={{ width: '7vw' }}
+                  >
+                    {dep.name}
+                  </TableCell>
+
+                  {/* kolumna 2 – potrzebny budżet */}
+                  <TableCell
+                    className="px-4 py-2 text-center border-x border-y"
+                    style={{ width: '15vw' }}
+                  >
+                    {dep.needed}
+                  </TableCell>
+
+                  {/* kolumna 3 – przydziel budżet (wartości z endpointu + edycja) */}
+                  <TableCell
+                    className="px-4 py-2 text-center border-x border-y"
+                    style={{ width: '15vw' }}
+                  >
+                    <Input
+                      type="text"
+                      value={editedBudgets[r] ?? ''}
+                      onChange={(event) => handleEditedBudgetChange(event, r)}
+                      className="w-[11vw] text-center"
+                    />
+                  </TableCell>
+
+                  {/* kolumna 4 – różnica */}
+                  <TableCell
+                    className="px-4 py-2 text-center border-x border-y"
+                    style={{ width: '15vw' }}
+                  >
+                    <Input
+                      type="text"
+                      value={calculateDifference(
+                        dep.needed,
+                        getAssigned(r)
                       )}
-                    </TableCell>
-                  ))}
+                      readOnly
+                      className="w-full bg-gray-100 text-gray-700 cursor-default text-center"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
