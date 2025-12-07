@@ -357,7 +357,7 @@ async def seed_like_a_boss(session):
         session.add(stat)
         exp_group = ExpenseGroups(definition="wydatki bieżące jednostek budżetowych")
         session.add(exp_group)
-        div = Divisions(value="750")
+        div = Divisions(value="751")
         session.add(div)
 
         table = Tables(year=this_year, version="v1.0", isOpen=True, budget=Decimal("1000000.00"))

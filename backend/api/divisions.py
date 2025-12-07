@@ -5,9 +5,23 @@ from typing import List
 
 from db.database import get_db
 from db.models import Chapters, Divisions
-from api.schemas import ChapterRead 
+from api.schemas import ChapterRead, DivisionRead 
 
 router = APIRouter(prefix="/api/divisions", tags=["Divisions"])
+
+@router.get(
+    "/",
+    response_model=List[DivisionRead],
+    summary="Get all Divisions"
+)
+async def get_divisions(
+    db: AsyncSession = Depends(get_db)
+) -> List[DivisionRead]:
+    stmt = select(Divisions)
+    result = await db.execute(stmt)
+    divisions_orm = result.scalars().all()
+
+    return [DivisionRead.model_validate(d) for d in divisions_orm]
 
 @router.get(
     "/{division_id}/chapters",
