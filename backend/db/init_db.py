@@ -289,7 +289,6 @@ async def seed_history_test(session):
             funding_source="D3",
             budget_code="WB27.HIST.TEST",
             
-            # Values for Version 2 (Changed)
             financial_needs_0=Decimal("5000"), expenditure_limit_0=Decimal("5000"), unallocated_task_funds_0=Decimal("0"), contract_amount_0=Decimal("5000"), contract_number_0="CTR-2024-X",
             financial_needs_1=Decimal("0"), expenditure_limit_1=Decimal("0"), unallocated_task_funds_1=Decimal("0"), contract_amount_1=Decimal("0"), contract_number_1="-",
             financial_needs_2=Decimal("0"), expenditure_limit_2=Decimal("0"), unallocated_task_funds_2=Decimal("0"), contract_amount_2=Decimal("0"), contract_number_2="-",
@@ -302,13 +301,11 @@ async def seed_history_test(session):
         )
         session.add(row_data_v2)
 
-        # 5. Create History Entry 3: CURRENT DATA (Now)
-        # Notice: Budget finalized at 5500
         date_v3 = datetime.now()
         row_data_v3 = RowDatas(
-            row_id=history_row.id, # Points to SAME row
+            row_id=history_row.id, 
             last_user_id=user.id,
-            last_update=date_v3,   # Current Date
+            last_update=date_v3,  
             
             budget_part="1",
             division_id=division.id,
