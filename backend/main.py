@@ -7,6 +7,9 @@ import uvicorn
 from db.init_db import init_db
 from api.user import router as user_router
 from api.table import router as table_router
+from api.chapters  import router as chapter_router
+from api.divisions  import router as division_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,3 +43,5 @@ def test2():
 
 app.include_router(user_router) 
 app.include_router(table_router)
+app.include_router(chapter_router)
+app.include_router(division_router)
