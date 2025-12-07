@@ -2,7 +2,7 @@ from api.schemas import TableFullDTO
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload, joinedload, with_loader_criteria
 from typing import List
 from api.schemas import HEADERS
 from api.excel import generete_excel
@@ -12,6 +12,40 @@ from fastapi.responses import StreamingResponse
 from io import BytesIO
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
+
+@router.get("/{table_id}/departments/{department_id}")
+async def get_department_from_table(table_id: int, department_id: int, db: AsyncSession = Depends(get_db)):
+    query = (
+        select(Tables)
+        .where(Tables.id == table_id)
+        .options(
+            with_loader_criteria(
+                DepartmentTables,
+                DepartmentTables.department_id == department_id,
+                include_aliases=True
+            ),
+
+            selectinload(Tables.department_tables).options(
+                joinedload(DepartmentTables.department),
+                joinedload(DepartmentTables.status),
+                selectinload(DepartmentTables.rows).options(
+                    selectinload(Rows.row_datas).options(
+                        joinedload(RowDatas.division),
+                        joinedload(RowDatas.chapter),
+                        joinedload(RowDatas.paragraph),
+                        joinedload(RowDatas.expense_group),
+                        joinedload(RowDatas.task_budget_full),
+                        joinedload(RowDatas.task_budget_function),
+                    )
+                )
+            )
+        )
+    )
+
+    result = await db.execute(query)
+    table = result.scalars().first()
+    dto = TableFullDTO.model_validate(table)
+    return dto
 
 @router.get("/{table_id}/generate_spreadsheet")
 async def get_excel(table_id: int):
