@@ -29,7 +29,7 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/zarzadzaj-budrzetem"
+            to="/admin/zarzadzaj-budzetem"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
             Zarządzaj budżetem
@@ -55,6 +55,17 @@ function ContentSideBarMenu() {
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
             Limity budżetu
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <NavLink
+            to="/admin/terminy-budzetowania"
+            className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
+          >
+            Terminy budżetowania
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
