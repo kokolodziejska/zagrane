@@ -1,4 +1,6 @@
 from datetime import date, datetime
+from api.mapper import RowDataMapper
+from api.schemas import RowUpdateRequest, TableFullDTO
 from fastapi import APIRouter, Depends, HTTPException, Request
 from api.schemas import TableFullDTO, BudgetUpdateRequest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +10,7 @@ from api.user import get_current_user
 from api.schemas import HEADERS
 from api.excel import generete_excel
 from db.database import get_db, AsyncSessionLocal
-from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapters, Paragraphs, ExpenseGroups, Users
+from db.models import Tables, DepartmentTables, Rows, RowDatas, Divisions, Chapters, Paragraphs, ExpenseGroups, Tasks, Users
 from fastapi.responses import RedirectResponse, StreamingResponse
 from io import BytesIO
 from typing import List
@@ -304,6 +306,116 @@ async def get_table_hierarchy(
     return table
 
 
+from sqlalchemy import select, and_
 
+
+@router.post("/batch-update")
+async def batch_update_rows(
+    updates: List[RowUpdateRequest],
+    db: AsyncSession = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    div_values = set()
+    chap_values = set()
+    par_values = set()
+    exp_values = set()
+    task_values = set()
+
+    pending_rows = []
+
+    now = datetime.now()
+
+    for item in updates:
+        raw_payload = item.model_dump()
+        mapped_data = RowDataMapper.map_row_data(raw_payload)
+        
+        if v := mapped_data.get("division_value"): div_values.add(v)
+        if v := mapped_data.get("chapter_value"): chap_values.add(v)
+        if v := mapped_data.get("paragraph_value"): par_values.add(v)
+        if v := mapped_data.get("expense_group_value"): exp_values.add(v)
+        
+        if v := mapped_data.get("task_budget_full_value"): task_values.add(v)
+        if v := mapped_data.get("task_budget_function_value"): task_values.add(v)
+
+        pending_rows.append((item, mapped_data))
+
+    div_map = {}
+    if div_values:
+        res = await db.execute(select(Divisions).where(Divisions.value.in_(div_values)))
+        div_map = {row.value: row.id for row in res.scalars()}
+
+    chap_map = {}
+    if chap_values:
+        res = await db.execute(select(Chapters).where(Chapters.value.in_(chap_values)))
+        chap_map = {row.value: row.id for row in res.scalars()}
+
+    par_map = {}
+    if par_values:
+        res = await db.execute(select(Paragraphs).where(Paragraphs.value.in_(par_values)))
+        par_map = {row.value: row.id for row in res.scalars()}
+
+    exp_map = {}
+    if exp_values:
+        res = await db.execute(select(ExpenseGroups).where(ExpenseGroups.definition.in_(exp_values)))
+        exp_map = {row.definition: row.id for row in res.scalars()}
+
+    task_map = {}
+    if task_values:
+        res = await db.execute(select(Tasks).where(Tasks.value.in_(task_values)))
+        task_map = {row.value: row.id for row in res.scalars()}
+
+    processed_ids = []
+    
+    for item, mapped_data in pending_rows:
+        
+        def get_id(value_key, map_dict, name):
+            val = mapped_data.get(value_key)
+            if not val: return None 
+            
+            found_id = map_dict.get(val)
+            if found_id is None:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Value '{val}' for field '{name}' not found in database."
+                )
+            return found_id
+
+        mapped_data["division_id"] = get_id("division_value", div_map, "Division")
+        mapped_data["chapter_id"] = get_id("chapter_value", chap_map, "Chapter")
+        mapped_data["paragraph_id"] = get_id("paragraph_value", par_map, "Paragraph")
+        mapped_data["expense_group_id"] = get_id("expense_group_value", exp_map, "Expense Group")
+        mapped_data["task_budget_full_id"] = get_id("task_budget_full_value", task_map, "Task Full")
+        mapped_data["task_budget_function_id"] = get_id("task_budget_function_value", task_map, "Task Function")
+
+        if item.rowId is None:
+            new_row = Rows(
+                department_table_id=item.departmentTableId,
+                last_update=now,
+                next_year=False 
+            )
+            db.add(new_row)
+            await db.flush()
+            target_row_id = new_row.id
+        else:
+            target_row_id = item.rowId
+            stmt = select(Rows).where(Rows.id == target_row_id)
+            result = await db.execute(stmt)
+            existing_row = result.scalar_one_or_none()
+            if not existing_row:
+                raise HTTPException(status_code=404, detail=f"Row {target_row_id} not found")
+            existing_row.last_update = now
+
+        mapped_data["row_id"] = target_row_id
+        mapped_data["last_user_id"] = item.lastUserId
+        mapped_data["last_update"] = now
+
+        valid_columns = RowDatas.__table__.columns.keys()
+        filtered_data = {k: v for k, v in mapped_data.items() if k in valid_columns}
+        
+        db.add(RowDatas(**filtered_data))
+        processed_ids.append(target_row_id)
+
+    await db.commit()
+    return {"status": "success", "processed_row_ids": processed_ids}
 
 

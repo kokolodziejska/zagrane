@@ -10,6 +10,7 @@ from api.table import router as table_router
 from api.chapters import router as chapters_router
 from api.divisions import router as divisions_router
 from api.department import router as department_router
+from api.department import router as department_router
 from api.tools import router as tools_router
 
 
