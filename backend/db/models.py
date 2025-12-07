@@ -119,11 +119,11 @@ class RowDatas(Base):
     last_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     last_update: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    budget_part: Mapped[str] = mapped_column(String(2), nullable=False)
+    budget_part: Mapped[str] = mapped_column(String, nullable=False)
     division_id: Mapped[int] = mapped_column(ForeignKey("divisions.id"), nullable=False)
     chapter_id: Mapped[int] = mapped_column(ForeignKey("chapters.id"), nullable=False)
     paragraph_id: Mapped[int] = mapped_column(ForeignKey("paragraphs.id"), nullable=False)
-    funding_source: Mapped[str] = mapped_column(String(2), nullable=True)
+    funding_source: Mapped[str] = mapped_column(String, nullable=True)
     expense_group_id: Mapped[int] = mapped_column(ForeignKey("expense_groups.id"), nullable=False)
     task_budget_full_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False)
     task_budget_function_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False)

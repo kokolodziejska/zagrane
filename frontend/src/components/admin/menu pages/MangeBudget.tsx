@@ -84,6 +84,58 @@ interface ChangeRecord {
     lastUpdate: string;
 }
 
+const twoDigitRegex = /^\d{2}$/;
+const threeDigitRegex = /^\d{3}$/;
+const fourDigitRegex = /^\d{4}$/;
+const fiveDigitRegex = /^\d{5}$/;
+const oneDigitRegex = /^\d$/;
+const fullTaskRegex = /^\d{2}\.\d{2}\.\d{2}\.\d{2}$/;
+const funcTaskRegex = /^\d{2}\.\d{2}$/;
+const amountRegex = /^\d+([.,]\d{1,2})?$/;
+
+const columnRegexes: (RegExp | null)[] = [
+    twoDigitRegex,    // 0 - Część budżetowa
+    threeDigitRegex,  // 1 - Dział
+    fiveDigitRegex,   // 2 - Rozdział
+    threeDigitRegex,  // 3 - Paragraf
+    oneDigitRegex,    // 4 - Źródło finansowania
+    null,             // 5 - Grupa wydatków (auto)
+    fullTaskRegex,    // 6 - Budżet zadaniowy w pełnej szczegółowości
+    funcTaskRegex,    // 7 - Budżet zadaniowy (nr funkcji, nr zadania)
+    null,             // 8 - Nazwa programu/projektu
+    null,             // 9 - Nazwa komórki organizacyjnej
+    null,             // 10 - Plan WI
+    null,             // 11 - Dysponent środków
+    null,             // 12 - Budżet (tekst/kwota - brak regex teraz)
+    null,             // 13 - Nazwa zadania
+    null,             // 14 - Szczegółowe uzasadnienie
+    null,             // 15 - Przeznaczenie wydatków
+    amountRegex,      // 16 - Potrzeby finansowe
+    amountRegex,      // 17 - Limit wydatków
+    amountRegex,      // 18 - Kwota niezabezpieczona
+    amountRegex,      // 19 - Kwota zawartej umowy
+    null,             // 20 - Nr umowy
+    amountRegex,      // 21 - Potrzeby finansowe 2 (jeśli masz kolejne lata)
+    amountRegex,      // 22 - Limit wydatków 2
+    amountRegex,      // 23 - Kwota niezabezpieczona 2
+    amountRegex,      // 24 - Kwota zawartej umowy 2
+    null,             // 25 - Nr umowy 2
+    amountRegex,      // 26 - Potrzeby finansowe 3
+    amountRegex,      // 27 - Limit wydatków 3
+    amountRegex,      // 28 - Kwota niezabezpieczona 3
+    amountRegex,      // 29 - Kwota zawartej umowy 3
+    null,             // 30 - Nr umowy 3
+    amountRegex,      // 31 - Potrzeby finansowe 4
+    amountRegex,      // 32 - Limit wydatków 4
+    amountRegex,      // 33 - Kwota niezabezpieczona 4
+    amountRegex,      // 34 - Kwota zawartej umowy 4
+    null,             // 35 - Nr umowy 4
+    null,             // 36 - W przypadku dotacji - z kim
+    null,             // 37 - Podstawa prawna
+    null,             // 38 - Uwagi
+    null,             // 39 - Dodatkowe
+];
+
 const extractRowData = (
     data: Row,
     tableId: number,
@@ -241,6 +293,14 @@ const upsertChange = (
     const copy = [...prev];
     copy[idx] = newRecord;
     return copy;
+};
+
+const validateCellValue = (colIndex: number, value: string): boolean => {
+    const regex = columnRegexes[colIndex];
+    if (!regex) return true;
+    const trimmed = value.trim();
+    if (trimmed === '') return true;
+    return regex.test(trimmed);
 };
 
 function MangeBudget() {
@@ -477,6 +537,63 @@ function MangeBudget() {
         fetchAll();
     }, []);
 
+    // global walidacja – jeśli jakakolwiek komórka jest niepoprawna,
+    // przycisk "Zapisz zmiany" będzie zablokowany
+    const hasInvalidCells = tableRows.some(row =>
+        row.values.some((v, colIndex) => !validateCellValue(colIndex, v))
+    );
+
+    const handleGenerateExcel = () => {
+        // bierzemy główne ID tabeli – albo z pierwszego wiersza, albo fallback na stałą
+        const mainTableId =
+            tableRows.length > 0 ? tableRows[0].tableId : TABLE_ID;
+
+        const url = `http://localhost:8000/api/tables/${mainTableId}/generate_spreadsheet`;
+
+        // najprostsze podejście – przeglądarka sama obsłuży pobranie
+        window.open(url, '_blank');
+    };
+
+
+    const handleSaveChanges = async () => {
+        // możesz zostawić loga do debugowania
+        console.log('Kliknięto Zapisz zmiany', changedRows);
+
+        // budujemy dokładnie taki payload, jak w przykładzie
+        const payload = changedRows.map(cr => ({
+            tableId: cr.tableId,
+            departmentTableId: cr.departmentTableId,
+            rowId: cr.rowId,
+            isDeleted: cr.isDeleted,
+            values: cr.values,
+            lastUserId: cr.lastUserId,
+            lastUpdate: cr.lastUpdate,
+        }));
+
+        try {
+            const res = await fetch('http://localhost:8000/api/tables/batch-update', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                console.error('Błąd zapisu zmian', await res.text());
+                return;
+            }
+
+            // po wysłaniu czyścimy tabelę zmian
+            setChangedRows([]);
+            console.log('Zapis zmian OK');
+        } catch (e) {
+            console.error('Błąd zapisu zmian', e);
+        }
+    };
+
+
     if (loading || !headers) return <div>Ładowanie danych...</div>;
     if (tableRows.length === 0)
         return (
@@ -544,9 +661,17 @@ function MangeBudget() {
     return (
         <div>
             <div className="flex flex-col justify-end items-end w-[80vw]">
-                <Button className="h-[3.5vh] w-[7vw]">
-                    Wygneruj Excel
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        className="h-[3.5vh] w-[10vw]"
+                        onClick={handleSaveChanges}
+                    >
+                        Zapisz zmiany
+                    </Button>
+                    <Button className="h-[3.5vh] w-[7vw]">
+                        Wygneruj Excel
+                    </Button>
+                </div>
             </div>
 
             <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[80vw] mt-[4vh]">
@@ -597,11 +722,15 @@ function MangeBudget() {
                                 </TableCell>
 
                                 {row.values.map((v, colIndex) => {
+                                    const invalid = !validateCellValue(colIndex, v);
+
                                     if (colIndex === 1) {
                                         return (
                                             <TableCell
                                                 key={colIndex}
-                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                    invalid ? ' bg-red-100 border-red-500' : ''
+                                                }`}
                                                 onClick={e => e.stopPropagation()}
                                             >
                                                 <SelectDivision
@@ -625,7 +754,9 @@ function MangeBudget() {
                                             return (
                                                 <TableCell
                                                     key={colIndex}
-                                                    className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                    className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                        invalid ? ' bg-red-100 border-red-500' : ''
+                                                    }`}
                                                 >
                                                     <span className="block w-full whitespace-normal break-words text-sm">
                                                         {v}
@@ -643,7 +774,9 @@ function MangeBudget() {
                                         return (
                                             <TableCell
                                                 key={colIndex}
-                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                    invalid ? ' bg-red-100 border-red-500' : ''
+                                                }`}
                                                 onClick={e => e.stopPropagation()}
                                             >
                                                 <SelectDivision
@@ -667,7 +800,9 @@ function MangeBudget() {
                                             return (
                                                 <TableCell
                                                     key={colIndex}
-                                                    className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                    className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                        invalid ? ' bg-red-100 border-red-500' : ''
+                                                    }`}
                                                 >
                                                     <span className="block w-full whitespace-normal break-words text-sm">
                                                         {v}
@@ -690,7 +825,9 @@ function MangeBudget() {
                                         return (
                                             <TableCell
                                                 key={colIndex}
-                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                    invalid ? ' bg-red-100 border-red-500' : ''
+                                                }`}
                                                 onClick={e => e.stopPropagation()}
                                             >
                                                 <SelectDivision
@@ -712,7 +849,9 @@ function MangeBudget() {
                                         return (
                                             <TableCell
                                                 key={colIndex}
-                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                    invalid ? ' bg-red-100 border-red-500' : ''
+                                                }`}
                                             >
                                                 <span className="block w-full whitespace-normal break-words text-sm">
                                                     {v}
@@ -729,7 +868,9 @@ function MangeBudget() {
                                     return (
                                         <TableCell
                                             key={colIndex}
-                                            className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                            className={`px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top${
+                                                invalid ? ' bg-red-100 border-red-500' : ''
+                                            }`}
                                             onClick={() => {
                                                 if (!isEditing) {
                                                     setEditingCell({
