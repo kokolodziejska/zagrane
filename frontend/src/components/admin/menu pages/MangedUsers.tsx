@@ -14,11 +14,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type User = {
+  type User = {
   id: number;
   username: string;
   name: string;
   surname: string;
+  department: string;   
+  user_type: string;    
 };
 
 function MangeUser() {
@@ -304,39 +306,53 @@ function MangeUser() {
           <div className="overflow-x-auto overflow-y-auto max-h-[35vh]">
             <Table className="min-w-max w-full">
               <TableHeader className="bg-gray-100 sticky top-0 z-10">
-                <TableRow>
-                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-                    ID
-                  </TableHead>
-                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-                    Nazwa użytkownika
-                  </TableHead>
-                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-                    Imię
-                  </TableHead>
-                  <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
-                    Nazwisko
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-gray-50">
-                    <TableCell className="px-2 py-2 text-left border-x border-y">
-                      {user.id}
-                    </TableCell>
-                    <TableCell className="px-2 py-2 text-left border-x border-y">
-                      {user.username}
-                    </TableCell>
-                    <TableCell className="px-2 py-2 text-left border-x border-y">
-                      {user.name}
-                    </TableCell>
-                    <TableCell className="px-2 py-2 text-left border-x border-y">
-                      {user.surname}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+  <TableRow>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      ID
+    </TableHead>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      Nazwa użytkownika
+    </TableHead>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      Imię
+    </TableHead>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      Nazwisko
+    </TableHead>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      Dział
+    </TableHead>
+    <TableHead className="px-2 py-2 text-left font-bold border-x border-y">
+      Typ użytkownika
+    </TableHead>
+  </TableRow>
+</TableHeader>
+
+             <TableBody>
+  {users.map((user) => (
+    <TableRow key={user.id} className="hover:bg-gray-50">
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.id}
+      </TableCell>
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.username}
+      </TableCell>
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.name}
+      </TableCell>
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.surname}
+      </TableCell>
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.department}
+      </TableCell>
+      <TableCell className="px-2 py-2 text-left border-x border-y">
+        {user.user_type}
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
             </Table>
           </div>
         )}
