@@ -29,7 +29,7 @@ function ContentSideBarMenu() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
-            to="/admin/zarzadzaj-budrzetem"
+            to="/admin/zarzadzaj-budzetem"
             className={({ isActive }) => (isActive ? 'bg-muted font-medium' : undefined)}
           >
             Zarządzaj budżetem

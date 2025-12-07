@@ -2,7 +2,8 @@ import os
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/reservation" # os.getenv( "DATABASE_URL")
+# DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/reservation"
+DATABASE_URL = os.getenv( "DATABASE_URL")
 
 engine = create_async_engine( 
     DATABASE_URL,
