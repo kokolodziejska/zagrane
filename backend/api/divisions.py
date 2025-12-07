@@ -24,22 +24,24 @@ async def get_divisions(
     return [DivisionRead.model_validate(d) for d in divisions_orm]
 
 @router.get(
-    "/{division_id}/chapters",
+    "/{division_value}/chapters",
     response_model=List[ChapterRead],
     summary="Get all Chapters for a specific Division"
 )
 async def get_chapters_by_division(
-    division_id: int,
+    division_value: str,
     db: AsyncSession = Depends(get_db)
 ) -> List[ChapterRead]:
-    division = await db.get(Divisions, division_id)
+    stmt = select(Divisions).where(Divisions.value == division_value)
+    result = await db.execute(stmt)
+    division = result.scalars().first()
     if not division:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Division with ID {division_id} not found"
+            detail=f"Division with ID {division_value} not found"
         )
 
-    stmt = select(Chapters).where(Chapters.division_id == division_id).order_by(Chapters.value)
+    stmt = select(Chapters).where(Chapters.division_id == division.id).order_by(Chapters.value)
     result = await db.execute(stmt)
     chapters_orm = result.scalars().all()
 

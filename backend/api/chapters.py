@@ -10,22 +10,24 @@ from api.schemas import ParagraphRead
 router = APIRouter(prefix="/api/chapters", tags=["Chapters"])
 
 @router.get(
-    "/{chapter_id}/paragraphs",
+    "/{chapter_value}/paragraphs",
     response_model=List[ParagraphRead],
     summary="Get all Paragraphs for a specific Chapter"
 )
 async def get_paragraphs_by_chapter(
-    chapter_id: int,
+    chapter_value: str,
     db: AsyncSession = Depends(get_db)
 ) -> List[ParagraphRead]:
-    chapter = await db.get(Chapters, chapter_id)
+    stmt = select(Chapters).where(Chapters.value == chapter_value)
+    result = await db.execute(stmt)
+    chapter = result.scalars().first()
     if not chapter:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Chapter with ID {chapter_id} not found"
+            detail=f"Chapter with ID {chapter_value} not found"
         )
 
-    stmt = select(Paragraphs).where(Paragraphs.chapter_id == chapter_id).order_by(Paragraphs.value)
+    stmt = select(Paragraphs).where(Paragraphs.chapter_id == chapter.id).order_by(Paragraphs.value)
     result = await db.execute(stmt)
     paragraphs_orm = result.scalars().all()
 
