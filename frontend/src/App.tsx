@@ -21,12 +21,8 @@ function App() {
             <Route index element={<DashBoard />} />
             <Route path="zarzadzaj-urzytkonikami" element={<MangeUserPage />} />
             <Route path="limity-budzetu" element={<LimitBudgetPage />} />
-<<<<<<< Updated upstream
-            <Route path="zarzadzaj-budzetem" element={<MangeBudgetPage />} />
-=======
             <Route path="terminy-budzetowania" element={<DepartmentSetDate />} />
             <Route path="zarzadzaj-budrzetem" element={<MangeBudgetPage />} />
->>>>>>> Stashed changes
             <Route path="uwagi-do-budżetu" element={<AddComentsPage />} />
           </Route>
         </Routes>

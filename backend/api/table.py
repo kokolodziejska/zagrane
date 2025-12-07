@@ -13,6 +13,49 @@ from io import BytesIO
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
 
+@router.get("/{table_id}/get_limits_per_department")
+async def get_limits_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
+    query = (
+        select(Tables)
+        .where(Tables.id == table_id)
+        .options(
+            selectinload(Tables.department_tables).options(
+                joinedload(DepartmentTables.department),
+                joinedload(DepartmentTables.status),
+                
+                selectinload(DepartmentTables.rows).options(
+                    selectinload(Rows.row_datas).options(
+                        joinedload(RowDatas.division),
+                        joinedload(RowDatas.chapter),
+                        joinedload(RowDatas.paragraph),
+                        joinedload(RowDatas.expense_group),
+                        joinedload(RowDatas.task_budget_full),
+                        joinedload(RowDatas.task_budget_function),
+                    )
+                )
+            )
+        )
+    )
+
+    result = await db.execute(query)
+    table = result.scalars().first()
+    dto = TableFullDTO.model_validate(table)
+
+    sums_per_dept = {}
+    for dept_table in dto.department_tables:
+        id = dept_table.department.type
+        partial = 0
+        for row in dept_table.rows:
+            for row_data in row.row_datas:
+                value = row_data.expenditure_limit_0 or 0
+                partial += int(value)
+        if id in sums_per_dept:
+            sums_per_dept[id] += partial
+        else:
+            sums_per_dept[id] = partial
+        
+    return sums_per_dept
+
 @router.get("/{table_id}/get_needs_per_department")
 async def get_needs_per_department(table_id: int, db: AsyncSession = Depends(get_db)):
     query = (
@@ -43,7 +86,7 @@ async def get_needs_per_department(table_id: int, db: AsyncSession = Depends(get
 
     sums_per_dept = {}
     for dept_table in dto.department_tables:
-        id = dept_table.department.id
+        id = dept_table.department.type
         partial = 0
         for row in dept_table.rows:
             for row_data in row.row_datas:
