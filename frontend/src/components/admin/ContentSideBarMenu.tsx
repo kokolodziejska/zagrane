@@ -14,7 +14,6 @@ import { ChevronDown } from 'lucide-react';
 function ContentSideBarMenu() {
   return (
     <>
-      {/* Zwykłe elementy bez sekcji */}
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
           <NavLink
@@ -81,7 +80,6 @@ function ContentSideBarMenu() {
         </SidebarMenuButton>
       </SidebarMenuItem>
 
-      {/* Sekcje wysuwane */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>

@@ -43,16 +43,13 @@ function isValidDate(date: Date | undefined) {
 }
 
 type DatePickerProps = {
-  /** Data w formacie 'YYYY-MM-DD' */
   value?: string;
-  /** Zwracana na zewnątrz data (ISO) przy każdej zmianie */
   onChange?: (value: string) => void;
 };
 
 function DatePicker({ value: valueProp, onChange }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
-  // Ustal początkową datę: z propsów albo domyślną
   const initialDate = valueProp ? fromISO(valueProp) : new Date('2025-06-01');
 
   const [date, setDate] = useState<Date | undefined>(initialDate);
@@ -82,7 +79,7 @@ function DatePicker({ value: valueProp, onChange }: DatePickerProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 mt-20">
       <Label htmlFor="date" className="px-1">
         Wybierz dzień
       </Label>

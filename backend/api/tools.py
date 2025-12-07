@@ -16,6 +16,8 @@ from api.pdf import create_docx
 
 
 router = APIRouter(prefix="/api/tools", tags=["tools"])
+
+@router.post("/get_docx")
 async def get_docx(payload: Dict):
     docx = create_docx(payload['data'], payload['comment'], payload['date'])
     return Response(

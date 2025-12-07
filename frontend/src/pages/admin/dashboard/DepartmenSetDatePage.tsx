@@ -2,9 +2,12 @@ import DepartmentSetDate from "@/components/admin/menu pages/DepartmentSetDate";
 
 function DepartmenSetDate() {
   return (
-    <div className="overflow-hidden">
-      <h1 className="text-3xl font-bold w-full text-center">Ustal terminy budżetowania</h1>
-      <div className="container flex flex-col items-center justify-center w-[80vw] gap-[2vw] pb-[10vh] mt-[4vh]">
+    <div className="w-full flex flex-col items-center py-10">
+      <h1 className="text-3xl font-bold w-full text-center mb-8">
+        Ustal terminy budżetowania
+      </h1>
+
+      <div className="w-[80vw]">
         <DepartmentSetDate />
       </div>
     </div>

@@ -4,18 +4,19 @@ from io import BytesIO
 
 def create_docx(data, comment, date):
     doc = Document()
-    doc.add_paragraph(f'Proszę edytować do: date')
-    table = doc.add_table(rows=1, cols=len(data[0]))
+    print(data)
+    doc.add_paragraph(f'Proszę edytować do: {date}')
+    table = doc.add_table(rows=1, cols=len(data['headers']))
     table.style = "Table Grid"
 
     # bold text
     hdr_cells = table.rows[0].cells
-    for i, heading in enumerate(data[0]):
+    for i, heading in enumerate(data['headers']):
         hdr_cells[i].text = heading
         hdr_cells[i].paragraphs[0].runs[0].bold = True
 
     # Add remaining rows
-    for row in data[1:]:
+    for row in data["rows"]:
         cells = table.add_row().cells
         for i, value in enumerate(row):
             cells[i].text = str(value)
