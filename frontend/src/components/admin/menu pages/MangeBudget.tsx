@@ -16,6 +16,11 @@ type Division = {
     value: string;
 };
 
+type Chapter = {
+    id: number;
+    value: string;
+};
+
 type RowValues = string[];
 
 interface EnrichedRow {
@@ -173,6 +178,17 @@ async function get_divisions(): Promise<Division[]> {
     }
 }
 
+async function get_chapters(divisionValue: string): Promise<Chapter[]> {
+    if (!divisionValue) return [];
+    try {
+        const res = await fetch(`/api/divisions/${divisionValue}/chapters`);
+        if (!res.ok) return [];
+        return (await res.json()) as Chapter[];
+    } catch {
+        return [];
+    }
+}
+
 const upsertChange = (
     prev: ChangeRecord[],
     updatedRow: EnrichedRow,
@@ -204,7 +220,6 @@ const upsertChange = (
 
     const copy = [...prev];
     copy[idx] = newRecord;
-    console.log(copy);
     return copy;
 };
 
@@ -217,6 +232,9 @@ function MangeBudget() {
 
     const [divisions, setDivisions] = useState<Division[]>([]);
     const [divisionsLoading, setDivisionsLoading] = useState(false);
+
+    const [chapters, setChapters] = useState<Record<string, Chapter[]>>({});
+    const [chaptersLoading, setChaptersLoading] = useState<Record<string, boolean>>({});
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyRows, setHistoryRows] = useState<EnrichedRow[]>([]);
@@ -232,6 +250,14 @@ function MangeBudget() {
     const [changedRows, setChangedRows] = useState<ChangeRecord[]>([]);
 
     const currentUserId = useSelector((state: any) => state.user?.userId ?? null);
+
+    const loadChapters = async (divisionValue: string) => {
+        if (!divisionValue) return;
+        setChaptersLoading(prev => ({ ...prev, [divisionValue]: true }));
+        const data = await get_chapters(divisionValue);
+        setChapters(prev => ({ ...prev, [divisionValue]: data }));
+        setChaptersLoading(prev => ({ ...prev, [divisionValue]: false }));
+    };
 
     const handleCellChange = (
         targetRow: EnrichedRow,
@@ -256,6 +282,27 @@ function MangeBudget() {
         const updatedValues = [...targetRow.values];
         updatedValues[1] = newDivision;
         updatedValues[2] = '';
+        updatedValues[3] = '';
+        updatedValues[5] = '';
+
+        const updatedRow: EnrichedRow = {
+            ...targetRow,
+            values: updatedValues,
+        };
+
+        setTableRows(prev =>
+            prev.map(r => (r === targetRow ? updatedRow : r))
+        );
+
+        setChangedRows(prevChanges => upsertChange(prevChanges, updatedRow, false, currentUserId));
+        if (newDivision) {
+            loadChapters(newDivision);
+        }
+    };
+
+    const handleChapterChange = (targetRow: EnrichedRow, newChapter: string) => {
+        const updatedValues = [...targetRow.values];
+        updatedValues[2] = newChapter;
         updatedValues[3] = '';
         updatedValues[5] = '';
 
@@ -342,6 +389,17 @@ function MangeBudget() {
             setDivisions(divs);
             setLoading(false);
             setDivisionsLoading(false);
+
+            const uniqueDivisions = Array.from(
+                new Set(
+                    rows
+                        .map(r => r.values[1])
+                        .filter(v => v && v.trim().length > 0)
+                )
+            ) as string[];
+            uniqueDivisions.forEach(d => {
+                loadChapters(d);
+            });
         };
         fetchAll();
     }, []);
@@ -479,6 +537,48 @@ function MangeBudget() {
                                                     loading={divisionsLoading}
                                                     onChange={newVal =>
                                                         handleDivisionChange(
+                                                            row,
+                                                            newVal
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                        );
+                                    }
+
+                                    if (colIndex === 2) {
+                                        const divisionValue = row.values[1];
+                                        if (!divisionValue) {
+                                            return (
+                                                <TableCell
+                                                    key={colIndex}
+                                                    className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                >
+                                                    <span className="block w-full whitespace-normal break-words text-sm">
+                                                        {v}
+                                                    </span>
+                                                </TableCell>
+                                            );
+                                        }
+
+                                        const divisionChapters =
+                                            chapters[divisionValue] ?? [];
+                                        const isChapterLoading =
+                                            chaptersLoading[divisionValue] ??
+                                            false;
+
+                                        return (
+                                            <TableCell
+                                                key={colIndex}
+                                                className="px-2 py-1 text-left border-x border-y max-w-60 whitespace-normal break-words align-top"
+                                                onClick={e => e.stopPropagation()}
+                                            >
+                                                <SelectDivision
+                                                    value={v}
+                                                    divisions={divisionChapters}
+                                                    loading={isChapterLoading}
+                                                    onChange={newVal =>
+                                                        handleChapterChange(
                                                             row,
                                                             newVal
                                                         )
