@@ -145,7 +145,7 @@ async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
     # 4. Resolve Department
     res_dept = await db.execute(
-        select(Departments).where(Departments.name == department_clean)
+        select(Departments).where(Departments.type == department_clean)
     )
     db_dept = res_dept.scalars().first()
 
@@ -180,7 +180,7 @@ async def make_new_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
             "username": new_user.user_name,
             "name": new_user.name,
             "surname": new_user.surname,
-            "department": db_dept.name,
+            "department": db_dept.type,
             "user_type": db_user_type.type
         }
 

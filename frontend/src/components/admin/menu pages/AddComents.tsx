@@ -61,7 +61,7 @@ interface BudgetData {
   department_tables: DepartmentTable[];
 }
 
-type RowValues = (string | number | null)[];
+type RowValues = string[];
 
 const extractRowData = (data: Row): RowValues[] => {
   const getVal = (obj: any, key: string, nestedKey?: string) => {
