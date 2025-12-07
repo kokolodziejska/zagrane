@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import DialogAddComment from './DialogAddComent';
 
 
-
+// ⬇️ PRZYWRÓCONE TWOJE PRZYKŁADOWE DANE
 const rows = [
   [
     'Funkcja Zadania 1',
@@ -96,7 +96,6 @@ function AddComents() {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-
   useEffect(() => {
     (async () => {
       const data = await get_table_headers();
@@ -112,75 +111,68 @@ function AddComents() {
       } else {
         set.delete(rowIndex);
       }
-      const arr = Array.from(set);
 
-      // logujemy, które wiersze są wybrane
+      const arr = Array.from(set);
       console.log('Wybrane indeksy wierszy:', arr);
-      console.log('Wybrane wiersze (dane):', arr.map((i) => rows[i]));
+      console.log('Wybrane wiersze:', arr.map((i) => rows[i]));
 
       return arr;
     });
   };
 
-  if (!headers) {
-    return <div>Ładowanie nagłówków tabeli...</div>;
-  }
+  if (!headers) return <div>Ładowanie nagłówków tabeli...</div>;
+
+  const selectedRowsData = selectedRows.map((i) => rows[i]);
 
   return (
     <div>
-  
-     <div className="flex flex-col justify-end items-end w-[75vw]">
-        <Button variant="default" className="h-[3.5vh] w-[7vw]" onClick={() => setDialogOpen(true)}>
-            Wygneruj Pdf
+      <div className="flex flex-col justify-end items-end w-[75vw]">
+        <Button className="h-[3.5vh] w-[7vw]" onClick={() => setDialogOpen(true)}>
+          Wygeneruj PDF
         </Button>
       </div>
 
       <div className="overflow-x-auto overflow-y-auto max-h-[60vh] max-w-[75vw] mt-[4vh]">
-      <Table className="min-w-max w-full">
-        <TableHeader className="bg-gray-100 sticky top-0 z-10">
-          <TableRow>
-            {/* kolumna na checkboxy */}
-            <TableHead className="w-10 px-2 py-2 text-center border-x border-y" />
-            {headers.map((header, j) => (
-              <TableHead
-                key={j}
-                className="px-2 py-2 text-left font-bold text-gray-800 border-x border-y"
-              >
-                {header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row, r) => (
-            <TableRow key={r} className="hover:bg-gray-50">
-              {/* checkbox na początku wiersza */}
-              <TableCell className="px-2 py-2 text-center border-x border-y">
-                <Checkbox
-                  checked={selectedRows.includes(r)}
-                  onCheckedChange={(value) =>
-                    handleRowCheckboxChange(r, value === true)
-                  }
-                />
-              </TableCell>
-
-              {row.map((ele, e) => (
-                <TableCell
-                  key={e}
-                  className={`px-4 py-2 text-left border-x border-y ${
-                    e === 0 ? 'pl-4' : ''
-                  }`}
-                >
-                  {ele}
-                </TableCell>
+        <Table className="min-w-max w-full">
+          <TableHeader className="bg-gray-100 sticky top-0 z-10">
+            <TableRow>
+              <TableHead className="w-10 px-2 py-2 text-center border-x border-y" />
+              {headers.map((header, j) => (
+                <TableHead key={j} className="px-2 py-2 text-left font-bold border-x border-y">
+                  {header}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-     {dialogOpen && (
-        <DialogAddComment open={dialogOpen} onOpenChange={setDialogOpen} />
+          </TableHeader>
+
+          <TableBody>
+            {rows.map((row, r) => (
+              <TableRow key={r} className="hover:bg-gray-50">
+                <TableCell className="px-2 py-2 text-center border-x border-y">
+                  <Checkbox
+                    checked={selectedRows.includes(r)}
+                    onCheckedChange={(v) => handleRowCheckboxChange(r, v === true)}
+                  />
+                </TableCell>
+
+                {row.map((ele, e) => (
+                  <TableCell key={e} className="px-4 py-2 text-left border-x border-y">
+                    {ele}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {dialogOpen && (
+        <DialogAddComment
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          headers={headers}
+          rows={selectedRowsData}   
+        />
       )}
     </div>
   );

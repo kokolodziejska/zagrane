@@ -11,11 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 import { useEffect, useState } from 'react';
 
-import { useAppDispatch } from '@/store/hooks';
-import { useAppSelector } from '@/store/hooks';
-import { setPickedDate } from '@/store/userState';
-import { selectIsLogin, selectPickedDate } from '@/store/selectors';
-
 const toISO = (d: Date): string => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -47,24 +42,44 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime());
 }
 
-function DatePicker() {
-  const picked = useAppSelector(selectPickedDate);
-  const dispatch = useAppDispatch();
+type DatePickerProps = {
+  /** Data w formacie 'YYYY-MM-DD' */
+  value?: string;
+  /** Zwracana na zewnątrz data (ISO) przy każdej zmianie */
+  onChange?: (value: string) => void;
+};
 
-  const [open, setOpen] = React.useState(false);
-  const [date, setDate] = React.useState<Date | undefined>(new Date('2025-06-01'));
-  const [month, setMonth] = React.useState<Date | undefined>(date);
-  const [value, setValue] = React.useState(formatDate(date));
+function DatePicker({ value: valueProp, onChange }: DatePickerProps) {
+  const [open, setOpen] = useState(false);
+
+  // Ustal początkową datę: z propsów albo domyślną
+  const initialDate = valueProp ? fromISO(valueProp) : new Date('2025-06-01');
+
+  const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [month, setMonth] = useState<Date | undefined>(initialDate);
+  const [inputValue, setInputValue] = useState(formatDate(initialDate));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+
   useEffect(() => {
-    const d = fromISO(picked);
-    setMonth(d);
-    setValue(formatDate(d));
+    if (!valueProp) return;
+
+    const d = fromISO(valueProp);
     setDate(d);
-  }, [picked]);
+    setMonth(d);
+    setInputValue(formatDate(d));
+  }, [valueProp]);
+
+  const handleDateChange = (newDate: Date) => {
+    setDate(newDate);
+    setMonth(newDate);
+    setInputValue(formatDate(newDate));
+
+    const iso = toISO(newDate);
+    onChange?.(iso); 
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -74,13 +89,15 @@ function DatePicker() {
       <div className="relative flex gap-2">
         <Input
           id="date"
-          value={value}
+          value={inputValue}
           className="bg-background pr-10"
           onChange={(e) => {
-            const date = new Date(e.target.value);
-            setValue(e.target.value);
-            if (isValidDate(date)) {
-              dispatch(setPickedDate(toISO(date)));
+            const text = e.target.value;
+            setInputValue(text);
+
+            const parsed = new Date(text);
+            if (isValidDate(parsed)) {
+              handleDateChange(parsed);
             }
           }}
           onKeyDown={(e) => {
@@ -112,11 +129,10 @@ function DatePicker() {
               selected={date}
               captionLayout="dropdown"
               month={month}
-              disabled={(d) => d < today}
               onMonthChange={setMonth}
-              onSelect={(date) => {
-                if (date) {
-                  dispatch(setPickedDate(toISO(date)));
+              onSelect={(selectedDate) => {
+                if (selectedDate) {
+                  handleDateChange(selectedDate);
                   setOpen(false);
                 }
               }}
@@ -127,4 +143,5 @@ function DatePicker() {
     </div>
   );
 }
+
 export default DatePicker;
